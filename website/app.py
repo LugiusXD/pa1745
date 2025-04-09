@@ -26,10 +26,20 @@ def serve_static_files(filename):
 @app.route('/add_task', methods=['POST'])
 def add_task():
     data = request.get_json()
-    task_id = data['task_id']
-    task_name = data['task_name']
-    tasks[task_id] = {'name': task_name, 'start_time': None}
-    return jsonify({'message': f'Task {task_name} added with ID {task_id}'})
+    task_slot = data.get('task_slot')  # e.g., "Task 1"
+    task_name = data.get('task_name')  # e.g., "My Custom Task"
+
+    if not task_slot or not task_name:
+        return jsonify({'message': 'Task slot and task name are required.'}), 400
+
+    # Check if the task slot is already assigned
+    if task_slot in tasks:
+        tasks[task_slot]['name'] = task_name  # Update the task name
+        return jsonify({'message': f'Task {task_name} updated in {task_slot}.'})
+    
+    # Assign a new task to the slot
+    tasks[task_slot] = {'name': task_name, 'start_time': None}
+    return jsonify({'message': f'Task {task_name} assigned to {task_slot}.'})
 
 @app.route('/remove_task', methods=['POST'])
 def remove_task():
@@ -112,7 +122,7 @@ def get_times():
                         start_time = None  # Reset start time for the next interval
 
             # Convert timedelta to string for each task
-            times_data = [
+            parsed_times = [
                 {"task": task, "elapsed_time": str(elapsed_time) if elapsed_time.total_seconds() > 0 else "0:00:01"}
                 for task, elapsed_time in times_data.items()
             ]
@@ -120,7 +130,22 @@ def get_times():
     except FileNotFoundError:
         return jsonify({'message': 'Times file not found'}), 404
 
-    return jsonify({'times': times_data})
+    # Merge parsed times with the `tasks` dictionary
+    for task_slot, task_info in tasks.items():
+        # Check if the task slot is already in the parsed times
+        existing_task = next((t for t in parsed_times if t['task'] == task_slot), None)
+        if existing_task:
+            # Update the task name if it exists in the parsed times
+            existing_task['name'] = task_info['name']
+        else:
+            # Add the task slot with a default elapsed time if not in parsed times
+            parsed_times.append({
+                "task": task_slot,
+                "elapsed_time": "0:00:00",
+                "name": task_info['name']
+            })
+
+    return jsonify({'times': parsed_times})
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -164,6 +164,29 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("device-list").value = "Default Device";
     updateUI();
 
+    // Assign a task to a slot
+    document.getElementById("assign-task").addEventListener("click", () => {
+        const taskSlot = document.getElementById("task-slot").value;
+        const taskName = document.getElementById("task-name").value;
+
+        if (!taskName) {
+            alert("Please enter a task name.");
+            return;
+        }
+
+        fetch('/add_task', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ task_slot: taskSlot, task_name: taskName })
+        })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                document.getElementById("task-name").value = ""; // Clear the input field
+            })
+            .catch(error => console.error("Error assigning task:", error));
+    });
+
     // Update times from server
     document.getElementById("update-times").addEventListener("click", () => {
         fetch('/get_times')
@@ -177,7 +200,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         const taskCell = document.createElement("td");
                         const timeCell = document.createElement("td");
 
-                        taskCell.textContent = task.task;
+                        taskCell.textContent = task.task + (task.name ? ` (${task.name})` : "");
                         timeCell.textContent = task.elapsed_time;
 
                         row.appendChild(taskCell);
