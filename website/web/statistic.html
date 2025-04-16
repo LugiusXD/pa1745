@@ -4,7 +4,7 @@
     <title>Statistic</title>
     <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="login/loginStyle.css" />
-
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Chart.js -->
 </head>
 <body>
     <ul class="ul-navbar">
@@ -13,47 +13,91 @@
         <button class="right login" onclick="document.getElementById('id01').style.display='block'">Login</button>
         <li><a href="devices.html">Devices</a></li>
     </ul>
+
+    <!-- Login Modal -->
     <div id="id01" class="modal">
-  
         <form class="modal-content animate" action="/action_page.php" method="post">
-          <div class="imgcontainer">
-            <span onclick="document.getElementById('id01').style.display='none'" class="close" title="Close Modal">&times;</span>
-            <img src="login/picture1.png" alt="Avatar" class="avatar">
-          </div>
-      
-          <div class="container">
-            <label for="uname"><b>Username</b></label>
-            <input type="text" placeholder="Enter Username" name="uname" required>
-      
-            <label for="psw"><b>Password</b></label>
-            <input type="password" placeholder="Enter Password" name="psw" required>
-              
-            <button class="loginbutton" type="submit">Login</button>
-            <label>
-              <input type="checkbox" checked="checked" name="remember"> Remember me
-            </label>
-          </div>
-      
-          <div class="container" style="background-color:#f1f1f1">
-            <button class="loginbutton" type="loginbutton" onclick="document.getElementById('id01').style.display='none'" class="cancelbtn">Cancel</button>
-            <span class="psw">Forgot <a href="#">password?</a></span>
-          </div>
+            <div class="imgcontainer">
+                <span onclick="document.getElementById('id01').style.display='none'" class="close" title="Close Modal">&times;</span>
+                <img src="login/picture1.png" alt="Avatar" class="avatar">
+            </div>
+            <div class="container">
+                <label for="uname"><b>Username</b></label>
+                <input type="text" placeholder="Enter Username" name="uname" required>
+                <label for="psw"><b>Password</b></label>
+                <input type="password" placeholder="Enter Password" name="psw" required>
+                <button class="loginbutton" type="submit">Login</button>
+                <label>
+                    <input type="checkbox" checked="checked" name="remember"> Remember me
+                </label>
+            </div>
+            <div class="container" style="background-color:#f1f1f1">
+                <button class="loginbutton" type="button" onclick="document.getElementById('id01').style.display='none'">Cancel</button>
+                <span class="psw">Forgot <a href="#">password?</a></span>
+            </div>
         </form>
-      </div>
-      
-      <script>
-      // Get the modal
-      var modal = document.getElementById('id01');
-      
-      // When the user clicks anywhere outside of the modal, close it
-      window.onclick = function(event) {
-          if (event.target == modal) {
-              modal.style.display = "none";
-          }
-      }
-      </script>
+    </div>
+
     <div class="banner">
         <h1>Statistics</h1>
     </div>
+
+    <!-- Chart Section -->
+    <div style="width: 20%; margin: auto;">
+        <h2>Time Spent Per Day</h2>
+        <canvas id="dailyChart"></canvas>
+        <h2>Total Weekly Time</h2>
+        <canvas id="pieChart"></canvas>
+    </div>
+
+    <script>
+        // Mock data baserat på tidigare dataset
+        const dailyLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        const dailyHours = [2.5, 1.75, 3, 2, 2.75, 0, 1]; // timmar per dag
+
+        // Histogram
+        new Chart(document.getElementById('dailyChart'), {
+            type: 'bar',
+            data: {
+                labels: dailyLabels,
+                datasets: [{
+                    label: 'Time Spent (hours)',
+                    data: dailyHours,
+                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 4
+                    }
+                }
+            }
+        });
+
+        // Pie chart – total per dag
+        new Chart(document.getElementById('pieChart'), {
+            type: 'pie',
+            data: {
+                labels: dailyLabels,
+                datasets: [{
+                    data: dailyHours,
+                    backgroundColor: [
+                        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#D3D3D3'
+                    ]
+                }]
+            },
+            options: {
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+    </script>
 </body>
 </html>

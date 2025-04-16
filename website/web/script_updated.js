@@ -182,7 +182,22 @@ document.addEventListener("DOMContentLoaded", function () {
             .then(response => response.json())
             .then(data => {
                 alert(data.message);
-                document.getElementById("task-name").value = ""; // Clear the input field
+
+                // Clear the input field
+                document.getElementById("task-name").value = "";
+
+                // Update the task list in the dropdown
+                const taskSlotSelect = document.getElementById("task-slot");
+                taskSlotSelect.innerHTML = ""; // Clear existing options
+
+                // Ensure all task slots are present in the dropdown
+                const allTaskSlots = ["Task 1", "Task 2", "Task 3", "Task 4", "Task 5", "Task 6"];
+                allTaskSlots.forEach(slot => {
+                    const option = document.createElement("option");
+                    option.value = slot;
+                    option.textContent = `${slot} (${data.tasks[slot]?.name || "Unassigned"})`;
+                    taskSlotSelect.appendChild(option);
+                });
             })
             .catch(error => console.error("Error assigning task:", error));
     });
@@ -200,8 +215,8 @@ document.addEventListener("DOMContentLoaded", function () {
                         const taskCell = document.createElement("td");
                         const timeCell = document.createElement("td");
 
-                        taskCell.textContent = task.task + (task.name ? ` (${task.name})` : "");
-                        timeCell.textContent = task.elapsed_time;
+                        taskCell.textContent = task.task; // Task name
+                        timeCell.textContent = task.elapsed_time; // Elapsed time
 
                         row.appendChild(taskCell);
                         row.appendChild(timeCell);

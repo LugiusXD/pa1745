@@ -1,7 +1,8 @@
 from flask import Flask, request, jsonify, send_from_directory
 from datetime import datetime, timedelta
 import os
-
+import csv
+import pandas as pd
 app = Flask(
     __name__,
     static_folder='web',  # Serve static files from the 'web' folder
@@ -11,7 +12,15 @@ app = Flask(
 tasks = {}
 total_times = {}
 removed_tasks = {}
-times_file = 'times.txt'
+times_file = os.path.join(os.path.dirname(__file__), 'times.csv')
+
+# test = False
+# times_file = None
+
+# if test:
+#     times_file = 'mock_times.csv'
+# else:
+#     times_file = 'times.csv'
 
 @app.route('/')
 def index():
@@ -32,14 +41,9 @@ def add_task():
     if not task_slot or not task_name:
         return jsonify({'message': 'Task slot and task name are required.'}), 400
 
-    # Check if the task slot is already assigned
-    if task_slot in tasks:
-        tasks[task_slot]['name'] = task_name  # Update the task name
-        return jsonify({'message': f'Task {task_name} updated in {task_slot}.'})
-    
-    # Assign a new task to the slot
+    # Update or assign the task name for the given slot
     tasks[task_slot] = {'name': task_name, 'start_time': None}
-    return jsonify({'message': f'Task {task_name} assigned to {task_slot}.'})
+    return jsonify({'message': f'Task {task_name} assigned to {task_slot}.', 'tasks': tasks})
 
 @app.route('/remove_task', methods=['POST'])
 def remove_task():
@@ -72,8 +76,15 @@ def stop_timer():
         elapsed_time = (stop_time - start_time).total_seconds()
         total_times[task_id] = total_times.get(task_id, 0) + elapsed_time
         elapsed_time_str = str(timedelta(seconds=elapsed_time))
-        with open(times_file, 'a') as f:
-            f.write(f'Task: {task_name}\nStart Time: {start_time.strftime("%Y-%m-%d %H:%M:%S")}\nStop Time: {stop_time.strftime("%Y-%m-%d %H:%M:%S")}\nElapsed Time: {elapsed_time_str}\n\n')
+        
+        # Write to CSV file
+        write_header = not os.path.exists(times_file)  # Check if the file exists
+        with open(times_file, 'a', newline='') as f:
+            writer = csv.writer(f)
+            if write_header:
+                writer.writerow(['Task', 'Start Time', 'Stop Time', 'Elapsed Time'])  # Write header
+            writer.writerow([task_name, start_time.strftime("%Y-%m-%d %H:%M:%S"), stop_time.strftime("%Y-%m-%d %H:%M:%S"), elapsed_time_str])
+        
         tasks[task_id]['start_time'] = None
         return jsonify({
             'message': f'Timer stopped for {task_name}',
@@ -81,9 +92,7 @@ def stop_timer():
             'stop_time': stop_time.strftime('%Y-%m-%d %H:%M:%S'),
             'time': elapsed_time_str
         })
-    else:
-        return jsonify({'message': 'No active timer for this task'}), 400
-
+    
 @app.route('/sort_times', methods=['POST'])
 def sort_times():
     all_times = {**total_times, **{task_id: 0 for task_id in removed_tasks if task_id not in total_times}}
@@ -95,57 +104,84 @@ def sort_times():
 
 @app.route('/get_times', methods=['GET'])
 def get_times():
+    if not os.path.exists(times_file):
+        return jsonify({'message': 'Times file not found'}), 404
+
     times_data = {}
     try:
         with open(times_file, 'r') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                task_name = row['Task']
+                elapsed_time = row['Elapsed Time']
+                # Convert elapsed time to seconds
+                elapsed_seconds = sum(
+                    int(x) * 60 ** i for i, x in enumerate(reversed(elapsed_time.split(":")))
+                )
+                if task_name in times_data:
+                    times_data[task_name] += elapsed_seconds
+                else:
+                    times_data[task_name] = elapsed_seconds
+
+    except Exception as e:
+        return jsonify({'message': f'Error reading times file: {str(e)}'}), 500
+
+    # Map task names to their assigned names
+    parsed_times = []
+    for task, elapsed_time in times_data.items():
+        assigned_name = tasks.get(task, {}).get('name', task)  # Use assigned name if available
+        parsed_times.append({
+            "task": assigned_name,
+            "elapsed_time": str(timedelta(seconds=int(elapsed_time)))
+        })
+
+    return jsonify({'times': parsed_times})
+
+
+@app.route('/graph_data')
+def graph_data():
+    try:
+        with open(times_file, 'r') as f:
             lines = f.readlines()
-            task_name = None
-            start_time = None
 
-            for line in lines:
-                line = line.strip().strip('"')  # Remove leading/trailing whitespace and quotes
-                if "Task" in line and "START" in line:
-                    # Extract task name and start time
-                    task_name = line.split(":")[0].strip()
-                    start_time_str = line.split("START :")[1].strip()
-                    start_time = datetime.strptime(start_time_str, "%Y-%m-%d %H:%M:%S")
-                elif "Task" in line and "STOP" in line:
-                    # Extract stop time and calculate elapsed time
-                    stop_time_str = line.split("STOP :")[1].strip()
-                    stop_time = datetime.strptime(stop_time_str, "%Y-%m-%d %H:%M:%S")
+        task_times = {}  # t.ex. {'Task 3 | 2025-04-09': total_seconds}
+
+        current_starts = {}  # håller starttider per task
+
+        for line in lines:
+            line = line.strip()
+            if "START" in line:
+                try:
+                    task = line.split(":")[0].strip()
+                    time_str = line.split("START :")[1].strip()
+                    start_time = datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S")
+                    current_starts[task] = start_time
+                except Exception:
+                    continue
+
+            elif "STOP" in line:
+                try:
+                    task = line.split(":")[0].strip()
+                    time_str = line.split("STOP :")[1].strip()
+                    stop_time = datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S")
+
+                    start_time = current_starts.get(task)
                     if start_time:
-                        elapsed_time = stop_time - start_time
-                        if task_name in times_data:
-                            times_data[task_name] += elapsed_time
-                        else:
-                            times_data[task_name] = elapsed_time
-                        start_time = None  # Reset start time for the next interval
+                        elapsed = (stop_time - start_time).total_seconds()
+                        date = start_time.strftime('%Y-%m-%d')
+                        key = f"{task} | {date}"
+                        task_times[key] = task_times.get(key, 0) + elapsed
+                        del current_starts[task]  # ta bort så vi inte använder den igen
+                except Exception:
+                    continue
 
-            # Convert timedelta to string for each task
-            parsed_times = [
-                {"task": task, "elapsed_time": str(elapsed_time) if elapsed_time.total_seconds() > 0 else "0:00:01"}
-                for task, elapsed_time in times_data.items()
-            ]
+        # Format till frontend-vänlig JSON
+        data = [{"label": k, "seconds": v} for k, v in task_times.items()]
+        return jsonify(data)
 
     except FileNotFoundError:
         return jsonify({'message': 'Times file not found'}), 404
 
-    # Merge parsed times with the `tasks` dictionary
-    for task_slot, task_info in tasks.items():
-        # Check if the task slot is already in the parsed times
-        existing_task = next((t for t in parsed_times if t['task'] == task_slot), None)
-        if existing_task:
-            # Update the task name if it exists in the parsed times
-            existing_task['name'] = task_info['name']
-        else:
-            # Add the task slot with a default elapsed time if not in parsed times
-            parsed_times.append({
-                "task": task_slot,
-                "elapsed_time": "0:00:00",
-                "name": task_info['name']
-            })
-
-    return jsonify({'times': parsed_times})
 
 if __name__ == '__main__':
     app.run(debug=True)
