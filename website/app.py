@@ -147,8 +147,10 @@ def get_times_from_csv():
         with open(times_file, 'r') as f:
             reader = csv.DictReader(f)
             for row in reader:
+                task_id = row['Task']
+                assigned_name = tasks.get(task_id, {}).get('name', task_id)  # Use assigned name if available
                 times_data.append({
-                    'task': row['Task'],
+                    'task': assigned_name,  # Use the assigned name
                     'start_time': row['Start Time'],
                     'stop_time': row['Stop Time'],
                     'elapsed_time': row['Elapsed Time']
