@@ -68,3 +68,74 @@ li a:hover:not(.active) {
   z-index: 0; /* Gör så att bannern hamnar under menyn */
   
 }
+
+/* General box styling */
+.box {
+  background-color: #f9f9f9; /* Light gray background */
+  border: 1px solid #ddd; /* Light border */
+  border-radius: 8px; /* Rounded corners */
+  padding: 16px; /* Inner spacing */
+  margin: 16px auto; /* Outer spacing and center alignment */
+  max-width: 600px; /* Limit the width of the box */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+}
+
+/* Headings inside boxes */
+.box h3 {
+  margin-top: 0; /* Remove top margin */
+  font-size: 1.5em; /* Slightly larger font size */
+  color: #333; /* Darker text color */
+}
+
+/* Buttons inside boxes */
+.box button {
+  margin: 8px 4px; /* Add spacing between buttons */
+  padding: 8px 12px; /* Button padding */
+  border: none; /* Remove default border */
+  border-radius: 4px; /* Rounded corners */
+  cursor: pointer; /* Pointer cursor on hover */
+}
+
+.box button.btn-primary {
+  background-color: #04AA6D; /* Green background */
+  color: white; /* White text */
+}
+
+.box button.btn-primary:hover {
+  background-color: #038a57; /* Darker green on hover */
+}
+
+.box button.btn-danger {
+  background-color: #d9534f; /* Red background */
+  color: white; /* White text */
+}
+
+.box button.btn-danger:hover {
+  background-color: #c9302c; /* Darker red on hover */
+}
+
+/* Center the content of the boxes */
+.box select,
+.box input,
+.box table {
+  width: 100%; /* Full width */
+  margin: 8px 0; /* Spacing between elements */
+}
+
+/* Table styling for statistics */
+.stats-table {
+  width: 100%; /* Full width */
+  border-collapse: collapse; /* Remove gaps between cells */
+}
+
+.stats-table th,
+.stats-table td {
+  border: 1px solid #ddd; /* Light border */
+  padding: 8px; /* Inner spacing */
+  text-align: left; /* Align text to the left */
+}
+
+.stats-table th {
+  background-color: #f2f2f2; /* Light gray background for headers */
+  font-weight: bold; /* Bold text */
+}
