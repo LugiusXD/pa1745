@@ -66,14 +66,12 @@
                     .then(taskAliases => {
                         // Process data to calculate hours per task per day
                         const taskDayData = {};
-                        const taskColors = {
-                            "Task 1": "#FF6384",
-                            "Task 2": "#36A2EB",
-                            "Task 3": "#FFCE56",
-                            "Task 4": "#4BC0C0",
-                            "Task 5": "#9966FF",
-                            "Task 6": "#FF9F40"
-                        };
+                        const taskColors = {}; // Dynamically populate task colors from the backend
+
+                        // Populate taskColors from the backend response
+                        Object.keys(taskAliases).forEach(taskID => {
+                            taskColors[taskID] = taskAliases[taskID].color;
+                        });
 
                         data.forEach(entry => {
                             const date = new Date(entry.start_time).toLocaleDateString('en-US', { weekday: 'short' });
@@ -92,11 +90,10 @@
                         // Prepare datasets for the stacked bar chart
                         const datasets = taskNames.map(task => {
                             const alias = taskAliases[task]?.alias || task; // Display alias if available
-                            const defaultTask = taskAliases[task]?.default || task; // Resolve to default task name
                             return {
                                 label: alias, // Display the alias
                                 data: dailyLabels.map(date => taskDayData[date]?.[task] || 0),
-                                backgroundColor: taskColors[defaultTask] || '#FF6384' // Use default task for color
+                                backgroundColor: taskColors[task] || '#FF6384' // Use original task ID for color
                             };
                         });
 
@@ -148,10 +145,7 @@
                                     data: taskNames.map(task => {
                                         return Object.values(taskDayData).reduce((sum, day) => sum + (day[task] || 0), 0);
                                     }),
-                                    backgroundColor: taskNames.map(task => {
-                                        const defaultTask = taskAliases[task]?.default || task; // Resolve to default task name
-                                        return taskColors[defaultTask] || '#FF6384'; // Use default task for color
-                                    })
+                                    backgroundColor: taskNames.map(task => taskColors[task] || '#FF6384') // Use original task ID for color
                                 }]
                             },
                             options: {

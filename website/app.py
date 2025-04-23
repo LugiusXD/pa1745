@@ -16,6 +16,16 @@ removed_tasks = {}
 # Add a dictionary to store aliases
 task_aliases = {}
 
+# Add a dictionary to store task colors
+task_colors = {
+    "Task 1": "#FF6384",
+    "Task 2": "#36A2EB",
+    "Task 3": "#FFCE56",
+    "Task 4": "#4BC0C0",
+    "Task 5": "#9966FF",
+    "Task 6": "#FF9F40"
+}
+
 test = True  # Set to True for testing, False for production
 times_file = None
 
@@ -157,7 +167,8 @@ def get_times_from_csv():
                     'task': assigned_name,  # Use the assigned name
                     'start_time': row['Start Time'],
                     'stop_time': row['Stop Time'],
-                    'elapsed_time': row['Elapsed Time']
+                    'elapsed_time': row['Elapsed Time'],
+                    'color': task_colors.get(task_id, "#FF6384")  # Include the color
                 })
     except Exception as e:
         return jsonify({'message': f'Error reading times file: {str(e)}'}), 500
@@ -210,8 +221,15 @@ def graph_data():
 
 @app.route('/get_task_aliases', methods=['GET'])
 def get_task_aliases():
-    # Return a mapping of task slots to their aliases and default names
-    return jsonify({slot: {"alias": alias, "default": slot} for slot, alias in task_aliases.items()})
+    # Return a mapping of task slots to their aliases, default names, and colors
+    return jsonify({
+        slot: {
+            "alias": alias,
+            "default": slot,
+            "color": task_colors.get(slot, "#FF6384")  # Default color if not found
+        }
+        for slot, alias in task_aliases.items()
+    })
 
 
 if __name__ == '__main__':
