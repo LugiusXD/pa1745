@@ -60,51 +60,87 @@
                     return;
                 }
 
-                // Process data to calculate daily hours
-                const dailyHours = {};
-                let totalTime = 0; // Variable to store the total time
+                // Process data to calculate hours per task per day
+                const taskDayData = {};
+                const taskColors = {
+                    "Task 1": "#FF6384",
+                    "Task 2": "#36A2EB",
+                    "Task 3": "#FFCE56",
+                    "Task 4": "#4BC0C0",
+                    "Task 5": "#9966FF",
+                    "Task 6": "#FF9F40"
+                };
+
                 data.forEach(entry => {
                     const date = new Date(entry.start_time).toLocaleDateString('en-US', { weekday: 'short' });
+                    const task = entry.task;
                     const elapsedTime = entry.elapsed_time.split(':').reduce((acc, time) => (60 * acc) + +time, 0) / 3600; // Convert to hours
-                    dailyHours[date] = (dailyHours[date] || 0) + elapsedTime;
-                    totalTime += elapsedTime; // Add to total time
+
+                    if (!taskDayData[date]) {
+                        taskDayData[date] = {};
+                    }
+                    taskDayData[date][task] = (taskDayData[date][task] || 0) + elapsedTime;
                 });
 
-                const dailyLabels = Object.keys(dailyHours);
-                const dailyData = Object.values(dailyHours);
+                const dailyLabels = Object.keys(taskDayData);
+                const taskNames = Object.keys(taskColors);
 
-                // Update bar chart
+                // Prepare datasets for the stacked bar chart
+                const datasets = taskNames.map(task => ({
+                    label: task,
+                    data: dailyLabels.map(date => taskDayData[date]?.[task] || 0),
+                    backgroundColor: taskColors[task]
+                }));
+
+                // Create the stacked bar chart
                 new Chart(document.getElementById('dailyChart'), {
                     type: 'bar',
                     data: {
                         labels: dailyLabels,
-                        datasets: [{
-                            label: 'Time Spent (hours)',
-                            data: dailyData,
-                            backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                            borderColor: 'rgba(75, 192, 192, 1)',
-                            borderWidth: 1
-                        }]
+                        datasets: datasets
                     },
                     options: {
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Time Spent Per Task Per Day'
+                            },
+                            legend: {
+                                position: 'top'
+                            }
+                        },
+                        responsive: true,
                         scales: {
+                            x: {
+                                stacked: true
+                            },
                             y: {
-                                beginAtZero: true
+                                stacked: true,
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Hours'
+                                }
                             }
                         }
                     }
                 });
 
-                // Update pie chart with total time in the title
+                // Calculate total time for the pie chart
+                const totalTime = Object.values(taskDayData).reduce((sum, day) => {
+                    return sum + Object.values(day).reduce((daySum, hours) => daySum + hours, 0);
+                }, 0);
+
+                // Create the pie chart
                 new Chart(document.getElementById('pieChart'), {
                     type: 'pie',
                     data: {
-                        labels: dailyLabels,
+                        labels: taskNames,
                         datasets: [{
-                            data: dailyData,
-                            backgroundColor: [
-                                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#D3D3D3'
-                            ]
+                            data: taskNames.map(task => {
+                                return Object.values(taskDayData).reduce((sum, day) => sum + (day[task] || 0), 0);
+                            }),
+                            backgroundColor: Object.values(taskColors)
                         }]
                     },
                     options: {
@@ -114,7 +150,7 @@
                             },
                             title: {
                                 display: true,
-                                text: `Total Weekly Time: ${totalTime.toFixed(2)} hours` // Add total time to the title
+                                text: `Total Weekly Time: ${totalTime.toFixed(2)} hours`
                             }
                         }
                     }

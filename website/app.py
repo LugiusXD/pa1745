@@ -13,7 +13,7 @@ tasks = {}
 total_times = {}
 removed_tasks = {}
 
-test = False  # Set to True for testing, False for production
+test = True  # Set to True for testing, False for production
 times_file = None
 
 if test:
