@@ -60,101 +60,114 @@
                     return;
                 }
 
-                // Process data to calculate hours per task per day
-                const taskDayData = {};
-                const taskColors = {
-                    "Task 1": "#FF6384",
-                    "Task 2": "#36A2EB",
-                    "Task 3": "#FFCE56",
-                    "Task 4": "#4BC0C0",
-                    "Task 5": "#9966FF",
-                    "Task 6": "#FF9F40"
-                };
+                // Fetch task aliases
+                fetch('/get_task_aliases')
+                    .then(response => response.json())
+                    .then(taskAliases => {
+                        // Process data to calculate hours per task per day
+                        const taskDayData = {};
+                        const taskColors = {
+                            "Task 1": "#FF6384",
+                            "Task 2": "#36A2EB",
+                            "Task 3": "#FFCE56",
+                            "Task 4": "#4BC0C0",
+                            "Task 5": "#9966FF",
+                            "Task 6": "#FF9F40"
+                        };
 
-                data.forEach(entry => {
-                    const date = new Date(entry.start_time).toLocaleDateString('en-US', { weekday: 'short' });
-                    const task = entry.task; // Use the assigned task name
-                    const elapsedTime = entry.elapsed_time.split(':').reduce((acc, time) => (60 * acc) + +time, 0) / 3600; // Convert to hours
+                        data.forEach(entry => {
+                            const date = new Date(entry.start_time).toLocaleDateString('en-US', { weekday: 'short' });
+                            const task = entry.task; // Use the original task name
+                            const elapsedTime = entry.elapsed_time.split(':').reduce((acc, time) => (60 * acc) + +time, 0) / 3600; // Convert to hours
 
-                    if (!taskDayData[date]) {
-                        taskDayData[date] = {};
-                    }
-                    taskDayData[date][task] = (taskDayData[date][task] || 0) + elapsedTime;
-                });
-
-                const dailyLabels = Object.keys(taskDayData);
-                const taskNames = [...new Set(data.map(entry => entry.task))]; // Get unique task names
-
-                // Prepare datasets for the stacked bar chart
-                const datasets = taskNames.map(task => ({
-                    label: task,
-                    data: dailyLabels.map(date => taskDayData[date]?.[task] || 0),
-                    backgroundColor: taskColors[task] || '#D3D3D3' // Default color if not defined
-                }));
-
-                // Create the stacked bar chart
-                new Chart(document.getElementById('dailyChart'), {
-                    type: 'bar',
-                    data: {
-                        labels: dailyLabels,
-                        datasets: datasets
-                    },
-                    options: {
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: 'Time Spent Per Task Per Day'
-                            },
-                            legend: {
-                                position: 'top'
+                            if (!taskDayData[date]) {
+                                taskDayData[date] = {};
                             }
-                        },
-                        responsive: true,
-                        scales: {
-                            x: {
-                                stacked: true
+                            taskDayData[date][task] = (taskDayData[date][task] || 0) + elapsedTime;
+                        });
+
+                        const dailyLabels = Object.keys(taskDayData);
+                        const taskNames = [...new Set(data.map(entry => entry.task))]; // Get unique task names
+
+                        // Prepare datasets for the stacked bar chart
+                        const datasets = taskNames.map(task => {
+                            const alias = taskAliases[task]?.alias || task; // Display alias if available
+                            const defaultTask = taskAliases[task]?.default || task; // Resolve to default task name
+                            return {
+                                label: alias, // Display the alias
+                                data: dailyLabels.map(date => taskDayData[date]?.[task] || 0),
+                                backgroundColor: taskColors[defaultTask] || '#FF6384' // Use default task for color
+                            };
+                        });
+
+                        // Create the stacked bar chart
+                        new Chart(document.getElementById('dailyChart'), {
+                            type: 'bar',
+                            data: {
+                                labels: dailyLabels,
+                                datasets: datasets
                             },
-                            y: {
-                                stacked: true,
-                                beginAtZero: true,
-                                title: {
-                                    display: true,
-                                    text: 'Hours'
+                            options: {
+                                plugins: {
+                                    title: {
+                                        display: true,
+                                        text: 'Time Spent Per Task Per Day'
+                                    },
+                                    legend: {
+                                        position: 'top'
+                                    }
+                                },
+                                responsive: true,
+                                scales: {
+                                    x: {
+                                        stacked: true
+                                    },
+                                    y: {
+                                        stacked: true,
+                                        beginAtZero: true,
+                                        title: {
+                                            display: true,
+                                            text: 'Hours'
+                                        }
+                                    }
                                 }
                             }
-                        }
-                    }
-                });
+                        });
 
-                // Calculate total time for the pie chart
-                const totalTime = Object.values(taskDayData).reduce((sum, day) => {
-                    return sum + Object.values(day).reduce((daySum, hours) => daySum + hours, 0);
-                }, 0);
+                        // Calculate total time for the pie chart
+                        const totalTime = Object.values(taskDayData).reduce((sum, day) => {
+                            return sum + Object.values(day).reduce((daySum, hours) => daySum + hours, 0);
+                        }, 0);
 
-                // Create the pie chart
-                new Chart(document.getElementById('pieChart'), {
-                    type: 'pie',
-                    data: {
-                        labels: taskNames,
-                        datasets: [{
-                            data: taskNames.map(task => {
-                                return Object.values(taskDayData).reduce((sum, day) => sum + (day[task] || 0), 0);
-                            }),
-                            backgroundColor: taskNames.map(task => taskColors[task] || '#D3D3D3')
-                        }]
-                    },
-                    options: {
-                        plugins: {
-                            legend: {
-                                position: 'right'
+                        // Create the pie chart
+                        new Chart(document.getElementById('pieChart'), {
+                            type: 'pie',
+                            data: {
+                                labels: taskNames.map(task => taskAliases[task]?.alias || task), // Display aliases
+                                datasets: [{
+                                    data: taskNames.map(task => {
+                                        return Object.values(taskDayData).reduce((sum, day) => sum + (day[task] || 0), 0);
+                                    }),
+                                    backgroundColor: taskNames.map(task => {
+                                        const defaultTask = taskAliases[task]?.default || task; // Resolve to default task name
+                                        return taskColors[defaultTask] || '#FF6384'; // Use default task for color
+                                    })
+                                }]
                             },
-                            title: {
-                                display: true,
-                                text: `Total Weekly Time: ${totalTime.toFixed(2)} hours`
+                            options: {
+                                plugins: {
+                                    legend: {
+                                        position: 'right'
+                                    },
+                                    title: {
+                                        display: true,
+                                        text: `Total Weekly Time: ${totalTime.toFixed(2)} hours`
+                                    }
+                                }
                             }
-                        }
-                    }
-                });
+                        });
+                    })
+                    .catch(error => console.error('Error fetching task aliases:', error));
             })
             .catch(error => console.error('Error fetching times:', error));
     </script>

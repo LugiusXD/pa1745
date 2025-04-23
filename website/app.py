@@ -13,6 +13,9 @@ tasks = {}
 total_times = {}
 removed_tasks = {}
 
+# Add a dictionary to store aliases
+task_aliases = {}
+
 test = True  # Set to True for testing, False for production
 times_file = None
 
@@ -41,8 +44,9 @@ def add_task():
     if not task_slot or not task_name:
         return jsonify({'message': 'Task slot and task name are required.'}), 400
 
-    # Update or assign the task name for the given slot
+    # Update or assign the alias for the given task slot
     tasks[task_slot] = {'name': task_name, 'start_time': None}
+    task_aliases[task_slot] = task_name  # Save the alias
     return jsonify({'message': f'Task {task_name} assigned to {task_slot}.', 'tasks': tasks})
 
 @app.route('/remove_task', methods=['POST'])
@@ -203,6 +207,11 @@ def graph_data():
 
     except FileNotFoundError:
         return jsonify({'message': 'Times file not found'}), 404
+
+@app.route('/get_task_aliases', methods=['GET'])
+def get_task_aliases():
+    # Return a mapping of task slots to their aliases and default names
+    return jsonify({slot: {"alias": alias, "default": slot} for slot, alias in task_aliases.items()})
 
 
 if __name__ == '__main__':
