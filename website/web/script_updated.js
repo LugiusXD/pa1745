@@ -1,4 +1,93 @@
 document.addEventListener("DOMContentLoaded", function () {
+    // Check if we are on the start page
+    if (document.querySelector(".banner h1").textContent === "Track Your Time") {
+        initializeStartPage();
+    }
+
+    // Check if we are on the devices page
+    if (document.querySelector(".banner h1").textContent === "Devices") {
+        initializeDevicesPage();
+    }
+});
+
+function initializeStartPage() {
+    // Assign a task to a slot
+    document.getElementById("assign-task").addEventListener("click", () => {
+        const taskSlot = document.getElementById("task-slot").value;
+        const taskName = document.getElementById("task-name").value;
+
+        if (!taskName) {
+            alert("Please enter a task name.");
+            return;
+        }
+
+        fetch('/add_task', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ task_slot: taskSlot, task_name: taskName })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    alert(data.message);
+                } else {
+                    alert("Failed to assign task.");
+                }
+
+                // Clear the input field
+                document.getElementById("task-name").value = "";
+
+                // Update the task list in the dropdown
+                const taskSlotSelect = document.getElementById("task-slot");
+                taskSlotSelect.innerHTML = ""; // Clear existing options
+
+                // Ensure all task slots are present in the dropdown
+                const allTaskSlots = ["Task 1", "Task 2", "Task 3", "Task 4", "Task 5", "Task 6"];
+                allTaskSlots.forEach(slot => {
+                    const option = document.createElement("option");
+                    option.value = slot;
+                    option.textContent = `${slot} (${data.tasks[slot]?.name || "Unassigned"})`;
+                    taskSlotSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error("Error assigning task:", error);
+                alert("An error occurred while assigning the task.");
+            });
+    });
+
+    // Update times from server
+    document.getElementById("update-times").addEventListener("click", () => {
+        fetch('/get_times')
+            .then(response => response.json())
+            .then(data => {
+                if (data.times) {
+                    const tableBody = document.getElementById("times-table-body");
+                    tableBody.innerHTML = ""; // Clear existing rows
+                    data.times.forEach(task => {
+                        const row = document.createElement("tr");
+                        const taskCell = document.createElement("td");
+                        const timeCell = document.createElement("td");
+
+                        taskCell.textContent = task.task; // Task name
+                        timeCell.textContent = task.elapsed_time; // Elapsed time
+
+                        row.appendChild(taskCell);
+                        row.appendChild(timeCell);
+                        tableBody.appendChild(row);
+                    });
+                } else {
+                    alert("No times found.");
+                }
+            })
+            .catch(error => {
+                console.error("Error fetching times:", error);
+                alert("An error occurred while fetching times.");
+            });
+    });
+}
+
+function initializeDevicesPage() {
     let devices = {};
     let activeDevice = null;
 
@@ -163,69 +252,4 @@ document.addEventListener("DOMContentLoaded", function () {
     activeDevice = "Default Device";
     document.getElementById("device-list").value = "Default Device";
     updateUI();
-
-    // Assign a task to a slot
-    document.getElementById("assign-task").addEventListener("click", () => {
-        const taskSlot = document.getElementById("task-slot").value;
-        const taskName = document.getElementById("task-name").value;
-
-        if (!taskName) {
-            alert("Please enter a task name.");
-            return;
-        }
-
-        fetch('/add_task', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ task_slot: taskSlot, task_name: taskName })
-        })
-            .then(response => response.json())
-            .then(data => {
-                alert(data.message);
-
-                // Clear the input field
-                document.getElementById("task-name").value = "";
-
-                // Update the task list in the dropdown
-                const taskSlotSelect = document.getElementById("task-slot");
-                taskSlotSelect.innerHTML = ""; // Clear existing options
-
-                // Ensure all task slots are present in the dropdown
-                const allTaskSlots = ["Task 1", "Task 2", "Task 3", "Task 4", "Task 5", "Task 6"];
-                allTaskSlots.forEach(slot => {
-                    const option = document.createElement("option");
-                    option.value = slot;
-                    option.textContent = `${slot} (${data.tasks[slot]?.name || "Unassigned"})`;
-                    taskSlotSelect.appendChild(option);
-                });
-            })
-            .catch(error => console.error("Error assigning task:", error));
-    });
-
-    // Update times from server
-    document.getElementById("update-times").addEventListener("click", () => {
-        fetch('/get_times')
-            .then(response => response.json())
-            .then(data => {
-                if (data.times) {
-                    const tableBody = document.getElementById("times-table-body");
-                    tableBody.innerHTML = ""; // Clear existing rows
-                    data.times.forEach(task => {
-                        const row = document.createElement("tr");
-                        const taskCell = document.createElement("td");
-                        const timeCell = document.createElement("td");
-
-                        taskCell.textContent = task.task; // Task name
-                        timeCell.textContent = task.elapsed_time; // Elapsed time
-
-                        row.appendChild(taskCell);
-                        row.appendChild(timeCell);
-                        tableBody.appendChild(row);
-                    });
-                } else {
-                    alert("No times found.");
-                }
-            })
-            .catch(error => console.error("Error fetching times:", error));
-    });
-});
+}

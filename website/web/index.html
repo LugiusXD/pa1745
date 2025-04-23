@@ -3,9 +3,8 @@
   <head>
     <title>TimeTracker</title>
     <link rel="stylesheet" href="style.css" />
-    <script defer src="scriptStyle.js"></script>
+    <script defer src="script_updated.js"></script>
     <link rel="stylesheet" href="login/loginStyle.css" />
-
   </head>
   <body>  
     <ul class="ul-navbar">
@@ -15,37 +14,30 @@
         <button class="right login" onclick="document.getElementById('id01').style.display='block'">Login</button>
     </ul>
     <div id="id01" class="modal">
-  
       <form class="modal-content animate" action="/action_page.php" method="post">
         <div class="imgcontainer">
           <span onclick="document.getElementById('id01').style.display='none'" class="close" title="Close Modal">&times;</span>
           <img src="login/picture1.png" alt="Avatar" class="avatar">
         </div>
-    
         <div class="container">
           <label for="uname"><b>Username</b></label>
           <input type="text" placeholder="Enter Username" name="uname" required>
-    
           <label for="psw"><b>Password</b></label>
           <input type="password" placeholder="Enter Password" name="psw" required>
-            
           <button class="loginbutton" type="submit">Login</button>
           <label>
             <input type="checkbox" checked="checked" name="remember"> Remember me
           </label>
         </div>
-    
         <div class="container" style="background-color:#f1f1f1">
           <button class="loginbutton" type="loginbutton" onclick="document.getElementById('id01').style.display='none'" class="cancelbtn">Cancel</button>
           <span class="psw">Forgot <a href="#">password?</a></span>
         </div>
       </form>
     </div>
-    
     <script>
     // Get the modal
     var modal = document.getElementById('id01');
-    
     // When the user clicks anywhere outside of the modal, close it
     window.onclick = function(event) {
         if (event.target == modal) {
@@ -55,6 +47,37 @@
     </script>
     <div class="banner">
       <h1>Track Your Time</h1>
-  </div>
+    </div>
+
+    <!-- Assign Task Section -->
+    <div class="box task">
+      <h3>Assign Task</h3>
+      <select id="task-slot">
+          <option value="Task 1">Task 1</option>
+          <option value="Task 2">Task 2</option>
+          <option value="Task 3">Task 3</option>
+          <option value="Task 4">Task 4</option>
+          <option value="Task 5">Task 5</option>
+          <option value="Task 6">Task 6</option>
+      </select>
+      <input type="text" id="task-name" placeholder="Enter task name" />
+      <button class="btn-primary" id="assign-task">Assign Task</button>
+    </div>
+
+    <!-- Statistics Section -->
+    <div class="box statistics">
+      <h3>Statistics</h3>
+      <table class="stats-table">
+          <tr><th>Task</th><th>Elapsed Time</th></tr>
+          <tbody id="times-table-body"></tbody>
+      </table>
+      <button class="btn-primary" id="update-times">Update Times</button>
+    </div>
+
+    <!-- Previous Tasks Section -->
+    <div class="box previous-tasks">
+      <h3>Previous Tasks</h3>
+      <ul id="previous-tasks-list"></ul>
+    </div>
   </body>
 </html>
