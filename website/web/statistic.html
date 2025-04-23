@@ -93,7 +93,7 @@
                             return {
                                 label: alias, // Display the alias
                                 data: dailyLabels.map(date => taskDayData[date]?.[task] || 0),
-                                backgroundColor: taskColors[task] || '#FF6384' // Use original task ID for color
+                                backgroundColor: taskColors[task]
                             };
                         });
 
@@ -132,9 +132,16 @@
                         });
 
                         // Calculate total time for the pie chart
-                        const totalTime = Object.values(taskDayData).reduce((sum, day) => {
-                            return sum + Object.values(day).reduce((daySum, hours) => daySum + hours, 0);
-                        }, 0);
+                        const totalTimePerTask = taskNames.reduce((acc, task) => {
+                            acc[task] = Object.values(taskDayData).reduce((sum, day) => sum + (day[task] || 0), 0);
+                            return acc;
+                        }, {});
+
+                        // Map task colors directly from the /api/times response
+                        const pieChartColors = taskNames.map(task => {
+                            const taskEntry = data.find(entry => entry.task === task);
+                            return taskEntry ? taskEntry.color : '#CCCCCC'; // Fallback to gray if no color is provided
+                        });
 
                         // Create the pie chart
                         new Chart(document.getElementById('pieChart'), {
@@ -142,10 +149,8 @@
                             data: {
                                 labels: taskNames.map(task => taskAliases[task]?.alias || task), // Display aliases
                                 datasets: [{
-                                    data: taskNames.map(task => {
-                                        return Object.values(taskDayData).reduce((sum, day) => sum + (day[task] || 0), 0);
-                                    }),
-                                    backgroundColor: taskNames.map(task => taskColors[task] || '#FF6384') // Use original task ID for color
+                                    data: taskNames.map(task => totalTimePerTask[task]), // Total time per task
+                                    backgroundColor: pieChartColors // Use colors from the backend
                                 }]
                             },
                             options: {
@@ -155,7 +160,7 @@
                                     },
                                     title: {
                                         display: true,
-                                        text: `Total Weekly Time: ${totalTime.toFixed(2)} hours`
+                                        text: `Total Weekly Time: ${Object.values(totalTimePerTask).reduce((sum, time) => sum + time, 0).toFixed(2)} hours`
                                     }
                                 }
                             }

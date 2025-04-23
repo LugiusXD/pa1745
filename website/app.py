@@ -168,7 +168,7 @@ def get_times_from_csv():
                     'start_time': row['Start Time'],
                     'stop_time': row['Stop Time'],
                     'elapsed_time': row['Elapsed Time'],
-                    'color': task_colors.get(task_id, "#FF6384")  # Include the color
+                    'color': task_colors.get(task_id, "#FF0084")  # Include the color
                 })
     except Exception as e:
         return jsonify({'message': f'Error reading times file: {str(e)}'}), 500
@@ -226,7 +226,7 @@ def get_task_aliases():
         slot: {
             "alias": alias,
             "default": slot,
-            "color": task_colors.get(slot, "#FF6384")  # Default color if not found
+            "color": task_colors[slot]  # Default color if not found
         }
         for slot, alias in task_aliases.items()
     })
