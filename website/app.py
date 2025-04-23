@@ -12,15 +12,15 @@ app = Flask(
 tasks = {}
 total_times = {}
 removed_tasks = {}
-times_file = os.path.join(os.path.dirname(__file__), 'times.csv')
 
-# test = False
-# times_file = None
+test = False  # Set to True for testing, False for production
+times_file = None
 
-# if test:
-#     times_file = 'mock_times.csv'
-# else:
-#     times_file = 'times.csv'
+if test:
+    times_file = os.path.join(os.path.dirname(__file__), 'mock_times.csv')
+else:
+    times_file = os.path.join(os.path.dirname(__file__), 'times.csv')
+
 
 @app.route('/')
 def index():
@@ -137,6 +137,26 @@ def get_times():
 
     return jsonify({'times': parsed_times})
 
+@app.route('/api/times', methods=['GET'])
+def get_times_from_csv():
+    if not os.path.exists(times_file):
+        return jsonify({'message': 'Times file not found'}), 404
+
+    times_data = []
+    try:
+        with open(times_file, 'r') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                times_data.append({
+                    'task': row['Task'],
+                    'start_time': row['Start Time'],
+                    'stop_time': row['Stop Time'],
+                    'elapsed_time': row['Elapsed Time']
+                })
+    except Exception as e:
+        return jsonify({'message': f'Error reading times file: {str(e)}'}), 500
+
+    return jsonify(times_data)
 
 @app.route('/graph_data')
 def graph_data():

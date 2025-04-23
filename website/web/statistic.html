@@ -51,53 +51,76 @@
     </div>
 
     <script>
-        // Mock data baserat på tidigare dataset
-        const dailyLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-        const dailyHours = [2.5, 1.75, 3, 2, 2.75, 0, 1]; // timmar per dag
-
-        // Histogram
-        new Chart(document.getElementById('dailyChart'), {
-            type: 'bar',
-            data: {
-                labels: dailyLabels,
-                datasets: [{
-                    label: 'Time Spent (hours)',
-                    data: dailyHours,
-                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 4
-                    }
+        // Fetch data from /api/times and update the charts
+        fetch('/api/times')
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    console.error(data.message);
+                    return;
                 }
-            }
-        });
 
-        // Pie chart – total per dag
-        new Chart(document.getElementById('pieChart'), {
-            type: 'pie',
-            data: {
-                labels: dailyLabels,
-                datasets: [{
-                    data: dailyHours,
-                    backgroundColor: [
-                        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#D3D3D3'
-                    ]
-                }]
-            },
-            options: {
-                plugins: {
-                    legend: {
-                        position: 'right'
+                // Process data to calculate daily hours
+                const dailyHours = {};
+                let totalTime = 0; // Variable to store the total time
+                data.forEach(entry => {
+                    const date = new Date(entry.start_time).toLocaleDateString('en-US', { weekday: 'short' });
+                    const elapsedTime = entry.elapsed_time.split(':').reduce((acc, time) => (60 * acc) + +time, 0) / 3600; // Convert to hours
+                    dailyHours[date] = (dailyHours[date] || 0) + elapsedTime;
+                    totalTime += elapsedTime; // Add to total time
+                });
+
+                const dailyLabels = Object.keys(dailyHours);
+                const dailyData = Object.values(dailyHours);
+
+                // Update bar chart
+                new Chart(document.getElementById('dailyChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: dailyLabels,
+                        datasets: [{
+                            label: 'Time Spent (hours)',
+                            data: dailyData,
+                            backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
                     }
-                }
-            }
-        });
+                });
+
+                // Update pie chart with total time in the title
+                new Chart(document.getElementById('pieChart'), {
+                    type: 'pie',
+                    data: {
+                        labels: dailyLabels,
+                        datasets: [{
+                            data: dailyData,
+                            backgroundColor: [
+                                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#D3D3D3'
+                            ]
+                        }]
+                    },
+                    options: {
+                        plugins: {
+                            legend: {
+                                position: 'right'
+                            },
+                            title: {
+                                display: true,
+                                text: `Total Weekly Time: ${totalTime.toFixed(2)} hours` // Add total time to the title
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => console.error('Error fetching times:', error));
     </script>
 </body>
 </html>

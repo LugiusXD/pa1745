@@ -2,7 +2,7 @@ import serial
 from datetime import datetime
 import string
 import pandas as pd
-from app import times_file
+from app import times_file, test
 # Serial setup
 ser = serial.Serial('COM7', 9600, timeout=1)
 
@@ -11,8 +11,6 @@ task_start_times = {}
 
 # Open the file in append mode
 with open(times_file, "a") as file:
-    # Uncomment the next line if you want to add column headers (only once)
-    # file.write("Task,Start,Stop,Elapsed\n")
 
     while True:
         line = ser.readline().decode("utf-8", errors="ignore").strip()
@@ -44,3 +42,4 @@ with open(times_file, "a") as file:
 
             except ValueError:
                 print("Invalid format:", clean_line)
+
