@@ -18,7 +18,7 @@ with open(times_file, "a") as file:
 
         if clean_line:
             print(clean_line)
-            current_time = datetime.now()
+            current_time = datetime.now().replace(microsecond=0)
 
             try:
                 # Expecting format like: "Task 1: START"
