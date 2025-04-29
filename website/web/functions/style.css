@@ -77,7 +77,18 @@ canvas {
     border-radius: 8px;
 }
 
+/* Diagram-container */
+.chart-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px; /* Space between the charts */
+    margin: 20px auto;
+}
 
+.chart {
+    width: 45%; /* Adjust the width of each chart */
+    text-align: center;
+}
 
 /* Primär grön knapp */
 .btn-primary {

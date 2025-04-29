@@ -43,7 +43,7 @@
     </div>
 
     <!-- Chart Section -->
-    <div style="width: 40%; margin: auto;">
+    <div style="width: 25%; margin: auto;">
         <h2>Time Spent Per Day</h2>
         <canvas id="dailyChart"></canvas>
         <h2>Total Weekly Time</h2>
@@ -183,6 +183,15 @@
                                     title: {
                                         display: true,
                                         text: `Total Weekly Time: ${Object.values(totalTimePerTask).reduce((sum, time) => sum + time, 0).toFixed(2)} hours`
+                                    },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: function (context) {
+                                                const taskName = context.label; // Get the task alias
+                                                const timeSpent = context.raw; // Get the raw value (time in hours)
+                                                return `${taskName}: ${timeSpent.toFixed(2)} h`;
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -327,6 +336,15 @@
                             title: {
                                 display: true,
                                 text: `Total Weekly Time: ${Object.values(totalTimePerTask).reduce((sum, time) => sum + time, 0).toFixed(2)} hours`
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
+                                        const taskName = context.label; // Get the task alias
+                                        const timeSpent = context.raw; // Get the raw value (time in hours)
+                                        return `${taskName}: ${timeSpent.toFixed(2)} h`; // Format the tooltip
+                                    }
+                                }
                             }
                         }
                     }
@@ -336,4 +354,3 @@
     </script>
 </body>
 </html>
-``` 
