@@ -3,6 +3,9 @@ from datetime import datetime, timedelta
 import os
 import csv
 import pandas as pd
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+
 app = Flask(
     __name__,
     static_folder='web',  # Serve static files from the 'web' folder
@@ -153,6 +156,7 @@ def get_times():
 
 @app.route('/api/times', methods=['GET'])
 def get_times_from_csv():
+    week = request.args.get('week', type=int)
     if not os.path.exists(times_file):
         return jsonify({'message': 'Times file not found'}), 404
 
@@ -161,14 +165,18 @@ def get_times_from_csv():
         with open(times_file, 'r') as f:
             reader = csv.DictReader(f)
             for row in reader:
+                start_time = datetime.strptime(row['Start Time'], "%Y-%m-%d %H:%M:%S")
+                if week and start_time.isocalendar()[1] != week:
+                    continue
+
                 task_id = row['Task']
-                assigned_name = tasks.get(task_id, {}).get('name', task_id)  # Use assigned name if available
+                assigned_name = tasks.get(task_id, {}).get('name', task_id)
                 times_data.append({
-                    'task': assigned_name,  # Use the assigned name
+                    'task': assigned_name,
                     'start_time': row['Start Time'],
                     'stop_time': row['Stop Time'],
                     'elapsed_time': row['Elapsed Time'],
-                    'color': task_colors.get(task_id, "#FF0084")  # Include the color
+                    'color': task_colors.get(task_id, "#FF0084")
                 })
     except Exception as e:
         return jsonify({'message': f'Error reading times file: {str(e)}'}), 500
@@ -230,6 +238,54 @@ def get_task_aliases():
         }
         for slot, alias in task_aliases.items()
     })
+
+@app.route('/get_available_weeks', methods=['GET'])
+def get_available_weeks():
+    if not os.path.exists(times_file):
+        return jsonify([])
+
+    weeks = set()
+    try:
+        with open(times_file, 'r') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                start_time = datetime.strptime(row['Start Time'], "%Y-%m-%d %H:%M:%S")
+                week_number = start_time.isocalendar()[1]
+                weeks.add(week_number)
+    except Exception as e:
+        return jsonify({'message': f'Error reading times file: {str(e)}'}), 500
+
+    return jsonify(sorted(weeks))
+
+@app.route('/generate_pdf', methods=['GET'])
+def generate_pdf():
+    week = request.args.get('week', type=int)
+    if not week:
+        return jsonify({'message': 'Week parameter is required'}), 400
+
+    # Filter data for the selected week
+    filtered_data = []
+    try:
+        with open(times_file, 'r') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                start_time = datetime.strptime(row['Start Time'], "%Y-%m-%d %H:%M:%S")
+                if start_time.isocalendar()[1] == week:
+                    filtered_data.append(row)
+    except Exception as e:
+        return jsonify({'message': f'Error reading times file: {str(e)}'}), 500
+
+    # Generate PDF
+    pdf_path = f"week_{week}_report.pdf"
+    c = canvas.Canvas(pdf_path, pagesize=letter)
+    c.drawString(100, 750, f"Time Report for Week {week}")
+    y = 700
+    for row in filtered_data:
+        c.drawString(100, y, f"Task: {row['Task']}, Start: {row['Start Time']}, Stop: {row['Stop Time']}, Elapsed: {row['Elapsed Time']}")
+        y -= 20
+    c.save()
+
+    return send_from_directory(os.getcwd(), pdf_path, as_attachment=True)
 
 
 if __name__ == '__main__':
