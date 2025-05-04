@@ -124,7 +124,7 @@
         let lastActiveSide = null;
     
           function updateActiveSide() {
-          fetch("../times.csv")
+          fetch('/api/last-task')
             .then(response => response.text())
             .then(text => {
               const lines = text.trim().split("\n");
