@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, session, redirect, url_for
 from datetime import datetime, timedelta
 import os
 import csv
@@ -11,6 +11,15 @@ app = Flask(
     static_folder='web',  # Serve static files from the 'web' folder
     template_folder='web'  # Serve HTML files from the 'web' folder
 )
+
+# Secret key for session management
+app.secret_key = 'your_secret_key_here'
+
+# Hardcoded user credentials (for simplicity)
+users = {
+    "admin": "password123",
+    "user1": "mypassword"
+}
 
 tasks = {}
 total_times = {}
@@ -36,6 +45,31 @@ if test:
     times_file = os.path.join(os.path.dirname(__file__), 'mock_times.csv')
 else:
     times_file = os.path.join(os.path.dirname(__file__), 'times.csv')
+
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+
+    if username in users and users[username] == password:
+        session['username'] = username
+        return jsonify({'message': 'Login successful', 'username': username})
+    else:
+        return jsonify({'message': 'Invalid username or password'}), 401
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    session.pop('username', None)
+    return jsonify({'message': 'Logged out successfully'})
+
+@app.route('/is_logged_in', methods=['GET'])
+def is_logged_in():
+    if 'username' in session:
+        return jsonify({'logged_in': True, 'username': session['username']})
+    else:
+        return jsonify({'logged_in': False})
 
 
 @app.route('/')
@@ -265,6 +299,8 @@ def generate_pdf():
 
     # Filter data for the selected week
     filtered_data = []
+    task_summary = {}
+    completed_tasks = {}
     try:
         with open(times_file, 'r') as f:
             reader = csv.DictReader(f)
@@ -272,6 +308,13 @@ def generate_pdf():
                 start_time = datetime.strptime(row['Start Time'], "%Y-%m-%d %H:%M:%S")
                 if start_time.isocalendar()[1] == week:
                     filtered_data.append(row)
+                    task_name = row['Task']
+                    elapsed_time = row['Elapsed Time']
+                    # Convert elapsed time to seconds
+                    elapsed_seconds = sum(
+                        int(x) * 60 ** i for i, x in enumerate(reversed(elapsed_time.split(":")))
+                    )
+                    task_summary[task_name] = task_summary.get(task_name, 0) + elapsed_seconds
     except Exception as e:
         return jsonify({'message': f'Error reading times file: {str(e)}'}), 500
 
@@ -279,10 +322,30 @@ def generate_pdf():
     pdf_path = f"week_{week}_report.pdf"
     c = canvas.Canvas(pdf_path, pagesize=letter)
     c.drawString(100, 750, f"Time Report for Week {week}")
+
+    # Add task details
     y = 700
+    c.setFont("Helvetica", 10)
     for row in filtered_data:
         c.drawString(100, y, f"Task: {row['Task']}, Start: {row['Start Time']}, Stop: {row['Stop Time']}, Elapsed: {row['Elapsed Time']}")
-        y -= 20
+        y -= 15
+        if y < 50:  # Create a new page if space runs out
+            c.showPage()
+            y = 750
+
+    # Add legend with task summary
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(100, y - 20, "Task Summary:")
+    y -= 40
+    c.setFont("Helvetica", 10)
+    for task, total_seconds in task_summary.items():
+        elapsed_time_str = str(timedelta(seconds=total_seconds))
+        c.drawString(100, y, f"Task: {task}, Total Time: {elapsed_time_str}")
+        y -= 15
+        if y < 50:  # Create a new page if space runs out
+            c.showPage()
+            y = 750
+    
     c.save()
 
     return send_from_directory(os.getcwd(), pdf_path, as_attachment=True)
