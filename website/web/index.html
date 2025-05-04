@@ -63,8 +63,8 @@
           <option value="Task 5">Task 5</option>
           <option value="Task 6">Task 6</option>
       </select>
-      <input type="text" id="task-name" placeholder="Enter task name" />
-      <button class="btn-primary" id="assign-task">Assign Task</button>
+      <input type="text" id="task-alias" placeholder="Enter task alias" />
+      <button class="btn-primary" id="assign-alias">Assign Alias</button>
     </div>
 
     <!-- Statistics Section -->
@@ -83,6 +83,7 @@
       <ul id="previous-tasks-list"></ul>
     </div>
 
+    <!-- Cube Layout Section -->
     <div class="box cube-layout cube">
       <h3 id="active-task-display">Active: -</h3>
       <div id="side1" class="cube-side">Side 1</div>
@@ -94,66 +95,59 @@
     </div>
 
     <script>
-      // Get the modal
-      var modal = document.getElementById('id01');
-      // When the user clicks anywhere outside of the modal, close it
-      window.onclick = function(event) {
-          if (event.target == modal) {
-              modal.style.display = "none";
+      const taskToSideId = {
+        "Task 1": "side1",
+        "Task 2": "side2",
+        "Task 3": "side3",
+        "Task 4": "side4",
+        "Task 5": "side5",
+        "Task 6": "side6"
+      };
+
+      const taskAliases = {
+        "Task 1": "Task 1",
+        "Task 2": "Task 2",
+        "Task 3": "Task 3",
+        "Task 4": "Task 4",
+        "Task 5": "Task 5",
+        "Task 6": "Task 6"
+      };
+
+      // Assign an alias to a task
+      document.getElementById('assign-alias').addEventListener('click', () => {
+        const task = document.getElementById('task-slot').value;
+        const alias = document.getElementById('task-alias').value;
+
+        if (alias.trim() === "") {
+          alert("Alias cannot be empty.");
+          return;
+        }
+
+        // Update the alias
+        taskAliases[task] = alias;
+
+        // Update the cube display
+        updateCubeDisplay();
+      });
+
+      // Update the cube display
+      function updateCubeDisplay() {
+        // Clear all sides
+        document.querySelectorAll('.cube-side').forEach((side) => {
+          side.textContent = side.id.charAt(0).toUpperCase() + side.id.slice(1); // Reset to default text
+        });
+
+        // Assign tasks (with aliases) to sides
+        Object.entries(taskToSideId).forEach(([task, side]) => {
+          const sideElement = document.getElementById(side);
+          if (sideElement) {
+            sideElement.textContent = taskAliases[task]; // Use the alias for display
           }
+        });
       }
-      // Get the modal
-      var modal = document.getElementById('id01');
-        // When the user clicks anywhere outside of the modal, close it
-        window.onclick = function(event) {
-            if (event.target == modal) {
-                modal.style.display = "none";
-            }
-        }
-    
-        // box
-        const taskToSideId = {
-            "Task 1": "side1",
-            "Task 2": "side2",
-            "Task 3": "side3",
-            "Task 4": "side4",
-            "Task 5": "side5",
-            "Task 6": "side6"
-          };
-    
-        let lastActiveSide = null;
-    
-          function updateActiveSide() {
-          fetch("../times.csv")
-            .then(response => response.text())
-            .then(text => {
-              const lines = text.trim().split("\n");
-              const lastLine = lines[lines.length - 1];  // Ta den sista raden
-              const [task] = lastLine.split(",", 3); // Vi tar bara uppgiften (Task) från raden
-    
-              const sideId = taskToSideId[task.trim()];
-    
-              if (sideId && sideId !== lastActiveSide) {
-                if (lastActiveSide) {
-                  const oldEl = document.getElementById(lastActiveSide);
-                  if (oldEl) oldEl.classList.remove("active");
-                }
-    
-                const newEl = document.getElementById(sideId);
-                if (newEl) newEl.classList.add("active");
-    
-              lastActiveSide = sideId;
-            }
-    
-            // Uppdatera texten på sidan
-            document.getElementById("active-task-display").textContent = "Active: " + task.trim();
-          })
-          .catch(error => console.error("Fel vid uppdatering:", error));
-        }
-    
-        updateActiveSide();
-        setInterval(updateActiveSide, 2000);
-      
-      </script>
+
+      // Initial cube display update
+      updateCubeDisplay();
+    </script>
   </body>
 </html>
