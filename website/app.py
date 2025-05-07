@@ -5,21 +5,20 @@ import csv
 import pandas as pd
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+import sys
+
+if getattr(sys, 'frozen', False):
+    # If running as a PyInstaller executable
+    base_path = sys._MEIPASS
+else:
+    # If running as a script
+    base_path = os.path.dirname(os.path.abspath(__file__))
 
 app = Flask(
     __name__,
-    static_folder='web',  # Serve static files from the 'web' folder
-    template_folder='web'  # Serve HTML files from the 'web' folder
+    static_folder=os.path.join(base_path, 'web'),
+    template_folder=os.path.join(base_path, 'web')
 )
-
-# Secret key for session management
-app.secret_key = 'your_secret_key_here'
-
-# Hardcoded user credentials (for simplicity)
-users = {
-    "admin": "password123",
-    "user1": "mypassword"
-}
 
 tasks = {}
 total_times = {}
@@ -38,7 +37,7 @@ task_colors = {
     "Task 6": "#FF9F40"
 }
 
-test = True  # Set to True for testing, False for production
+test = False  # Set to True for testing, False for production
 times_file = None
 
 if test:
@@ -47,29 +46,12 @@ else:
     times_file = os.path.join(os.path.dirname(__file__), 'times.csv')
 
 
-@app.route('/login', methods=['POST'])
-def login():
-    data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
-
-    if username in users and users[username] == password:
-        session['username'] = username
-        return jsonify({'message': 'Login successful', 'username': username})
-    else:
-        return jsonify({'message': 'Invalid username or password'}), 401
-
-@app.route('/logout', methods=['POST'])
-def logout():
-    session.pop('username', None)
-    return jsonify({'message': 'Logged out successfully'})
-
-@app.route('/is_logged_in', methods=['GET'])
-def is_logged_in():
-    if 'username' in session:
-        return jsonify({'logged_in': True, 'username': session['username']})
-    else:
-        return jsonify({'logged_in': False})
+@app.route('/api/last-task')
+def last_task():
+    with open(times_file, 'r') as f:
+        lines = f.readlines()
+        last_line = lines[-1] if lines else ''
+    return last_line
 
 
 @app.route('/')
@@ -77,10 +59,12 @@ def index():
     # Serve the new index.html from the web folder
     return send_from_directory(app.template_folder, 'index.html')
 
+
 @app.route('/<path:filename>')
 def serve_static_files(filename):
     # Serve other static files (CSS, JS, HTML) from the web folder
     return send_from_directory(app.static_folder, filename)
+
 
 @app.route('/add_task', methods=['POST'])
 def add_task():
@@ -96,6 +80,7 @@ def add_task():
     task_aliases[task_slot] = task_name  # Save the alias
     return jsonify({'message': f'Task {task_name} assigned to {task_slot}.', 'tasks': tasks})
 
+
 @app.route('/remove_task', methods=['POST'])
 def remove_task():
     data = request.get_json()
@@ -107,6 +92,7 @@ def remove_task():
     else:
         return jsonify({'message': 'Task ID not found'}), 400
 
+
 @app.route('/start_timer', methods=['POST'])
 def start_timer():
     data = request.get_json()
@@ -115,6 +101,7 @@ def start_timer():
     start_time = datetime.now()
     tasks[task_id]['start_time'] = start_time
     return jsonify({'message': f'Timer started for {task_name}', 'start_time': start_time.strftime('%Y-%m-%d %H:%M:%S')})
+
 
 @app.route('/stop_timer', methods=['POST'])
 def stop_timer():
@@ -127,7 +114,7 @@ def stop_timer():
         elapsed_time = (stop_time - start_time).total_seconds()
         total_times[task_id] = total_times.get(task_id, 0) + elapsed_time
         elapsed_time_str = str(timedelta(seconds=elapsed_time))
-        
+
         # Write to CSV file
         write_header = not os.path.exists(times_file)  # Check if the file exists
         with open(times_file, 'a', newline='') as f:
@@ -135,7 +122,7 @@ def stop_timer():
             if write_header:
                 writer.writerow(['Task', 'Start Time', 'Stop Time', 'Elapsed Time'])  # Write header
             writer.writerow([task_name, start_time.strftime("%Y-%m-%d %H:%M:%S"), stop_time.strftime("%Y-%m-%d %H:%M:%S"), elapsed_time_str])
-        
+
         tasks[task_id]['start_time'] = None
         return jsonify({
             'message': f'Timer stopped for {task_name}',
@@ -143,7 +130,8 @@ def stop_timer():
             'stop_time': stop_time.strftime('%Y-%m-%d %H:%M:%S'),
             'time': elapsed_time_str
         })
-    
+
+
 @app.route('/sort_times', methods=['POST'])
 def sort_times():
     all_times = {**total_times, **{task_id: 0 for task_id in removed_tasks if task_id not in total_times}}
@@ -152,6 +140,7 @@ def sort_times():
     with open(times_file, 'a') as f:
         f.write(f'Sorted times:\n{sorted_times_str}\n\n')
     return jsonify({'message': f'Sorted times:\n{sorted_times_str}'})
+
 
 @app.route('/get_times', methods=['GET'])
 def get_times():
@@ -188,6 +177,7 @@ def get_times():
 
     return jsonify({'times': parsed_times})
 
+
 @app.route('/api/times', methods=['GET'])
 def get_times_from_csv():
     week = request.args.get('week', type=int)
@@ -216,6 +206,7 @@ def get_times_from_csv():
         return jsonify({'message': f'Error reading times file: {str(e)}'}), 500
 
     return jsonify(times_data)
+
 
 @app.route('/graph_data')
 def graph_data():
@@ -261,6 +252,7 @@ def graph_data():
     except FileNotFoundError:
         return jsonify({'message': 'Times file not found'}), 404
 
+
 @app.route('/get_task_aliases', methods=['GET'])
 def get_task_aliases():
     # Return a mapping of task slots to their aliases, default names, and colors
@@ -272,6 +264,7 @@ def get_task_aliases():
         }
         for slot, alias in task_aliases.items()
     })
+
 
 @app.route('/get_available_weeks', methods=['GET'])
 def get_available_weeks():
@@ -290,6 +283,7 @@ def get_available_weeks():
         return jsonify({'message': f'Error reading times file: {str(e)}'}), 500
 
     return jsonify(sorted(weeks))
+
 
 @app.route('/generate_pdf', methods=['GET'])
 def generate_pdf():
@@ -345,7 +339,7 @@ def generate_pdf():
         if y < 50:  # Create a new page if space runs out
             c.showPage()
             y = 750
-    
+
     c.save()
 
     return send_from_directory(os.getcwd(), pdf_path, as_attachment=True)

@@ -1,17 +1,48 @@
+import os
 import serial
+from serial.serialutil import SerialException
 from datetime import datetime
 import string
 import pandas as pd
-from app import times_file, test
+from app import test
+import csv
+import sys
+
+# Determine the base path
+if getattr(sys, 'frozen', False):
+    # If running as a PyInstaller executable
+    base_path = sys._MEIPASS
+else:
+    # If running as a script
+    base_path = os.path.dirname(os.path.abspath(__file__))
+
+# Path to times.csv
+times_file = os.path.join(base_path, 'times.csv')
+
+# Ensure the file exists
+if not os.path.exists(times_file):
+    with open(times_file, 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(['Task', 'Start Time', 'Stop Time', 'Elapsed Time'])  # Write header
+
 # Serial setup
-ser = serial.Serial('COM7', 9600, timeout=1)
+try:
+    ser = serial.Serial('COM7', 9600, timeout=1)
+except SerialException as e:
+    print(f"Error: Could not open serial port: {e}")
+    ser = None
 
 # Dictionary to track start times for each task
 task_start_times = {}
 
-# Open the file in append mode
-with open(times_file, "a") as file:
+# Function to log time to times.csv
+def log_time(task, start_time, stop_time, elapsed_time):
+    with open(times_file, 'a', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow([task, start_time, stop_time, elapsed_time])
 
+# Open the file in append mode
+if ser:
     while True:
         line = ser.readline().decode("utf-8", errors="ignore").strip()
         clean_line = ''.join(filter(lambda x: x in string.printable, line))
@@ -34,8 +65,7 @@ with open(times_file, "a") as file:
                         start_time = task_start_times.pop(task)
                         elapsed = current_time - start_time
                         # Write row to file
-                        file.write(f"{task},{start_time},{current_time},{elapsed}\n")
-                        
+                        log_time(task, start_time, current_time, elapsed)
 
                     else:
                         print(f"Warning: STOP received for {task} with no matching START")

@@ -3,14 +3,35 @@ document.addEventListener("DOMContentLoaded", function () {
     if (document.querySelector(".banner h1").textContent === "Track Your Time") {
         initializeStartPage();
     }
-
-    // Check if we are on the devices page
-    if (document.querySelector(".banner h1").textContent === "Devices") {
-        initializeDevicesPage();
-    }
 });
 
 function initializeStartPage() {
+    // Fetch and populate the task dropdown
+    function updateTaskDropdown() {
+        fetch('/get_task_aliases')
+            .then(response => response.json())
+            .then(taskAliases => {
+                const taskSlotSelect = document.getElementById("task-slot");
+                taskSlotSelect.innerHTML = ""; // Clear existing options
+
+                // Ensure all task slots are present in the dropdown
+                const allTaskSlots = ["Task 1", "Task 2", "Task 3", "Task 4", "Task 5", "Task 6"];
+                allTaskSlots.forEach(slot => {
+                    const option = document.createElement("option");
+                    option.value = slot;
+                    option.textContent = `${slot} (${taskAliases[slot]?.alias || "Unassigned"})`;
+                    taskSlotSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error("Error fetching task aliases:", error);
+                alert("An error occurred while updating the task dropdown.");
+            });
+    }
+
+    // Call the function to update the dropdown on page load
+    updateTaskDropdown();
+
     // Assign a task to a slot
     document.getElementById("assign-task").addEventListener("click", () => {
         const taskSlot = document.getElementById("task-slot").value;
@@ -37,18 +58,8 @@ function initializeStartPage() {
                 // Clear the input field
                 document.getElementById("task-name").value = "";
 
-                // Update the task list in the dropdown
-                const taskSlotSelect = document.getElementById("task-slot");
-                taskSlotSelect.innerHTML = ""; // Clear existing options
-
-                // Ensure all task slots are present in the dropdown
-                const allTaskSlots = ["Task 1", "Task 2", "Task 3", "Task 4", "Task 5", "Task 6"];
-                allTaskSlots.forEach(slot => {
-                    const option = document.createElement("option");
-                    option.value = slot;
-                    option.textContent = `${slot} (${data.tasks[slot]?.name || "Unassigned"})`;
-                    taskSlotSelect.appendChild(option);
-                });
+                // Update the task dropdown
+                updateTaskDropdown();
             })
             .catch(error => {
                 console.error("Error assigning task:", error);
@@ -86,72 +97,6 @@ function initializeStartPage() {
             });
     });
 }
-
-function initializeDevicesPage() {
-    let devices = {};
-    let activeDevice = null;
-
-    // Initialize the UI
-    function updateUI() {
-        if (!activeDevice) return;
-        const deviceData = devices[activeDevice];
-        document.getElementById("current-task-name").textContent = deviceData.activeTask || "None";
-        updatePreviousTasks();
-    }
-
-    // Add a new device
-    document.getElementById("add-device").addEventListener("click", () => {
-        const deviceName = prompt("Enter the name of the new device:");
-        if (deviceName && !devices[deviceName]) {
-            devices[deviceName] = {
-                tasks: {},
-                activeTask: null,
-                previousTasks: [],
-            };
-            const option = new Option(deviceName, deviceName);
-            document.getElementById("device-list").appendChild(option);
-            activeDevice = deviceName;
-            document.getElementById("device-list").value = deviceName;
-            updateUI();
-        } else {
-            alert("Device already exists or invalid name.");
-        }
-    });
-
-    // Remove the selected device
-    document.getElementById("remove-device").addEventListener("click", () => {
-        if (!activeDevice) {
-            alert("No device selected.");
-            return;
-        }
-        if (confirm(`Are you sure you want to remove the device "${activeDevice}"?`)) {
-            delete devices[activeDevice];
-            const deviceList = document.getElementById("device-list");
-            deviceList.remove(deviceList.selectedIndex);
-            activeDevice = null;
-            updateUI();
-        }
-    });
-
-    // Change the name of the selected device
-    document.getElementById("change-device").addEventListener("click", () => {
-        if (!activeDevice) {
-            alert("No device selected.");
-            return;
-        }
-        const newDeviceName = prompt("Enter the new name for the device:", activeDevice);
-        if (newDeviceName && !devices[newDeviceName]) {
-            devices[newDeviceName] = devices[activeDevice];
-            delete devices[activeDevice];
-            const deviceList = document.getElementById("device-list");
-            deviceList.options[deviceList.selectedIndex].text = newDeviceName;
-            deviceList.options[deviceList.selectedIndex].value = newDeviceName;
-            activeDevice = newDeviceName;
-            updateUI();
-        } else {
-            alert("Invalid name or device with this name already exists.");
-        }
-    });
 
     // Add a new task
     document.getElementById("add-task").addEventListener("click", () => {
@@ -235,21 +180,3 @@ function initializeDevicesPage() {
         });
     }
 
-    // Handle device selection
-    document.getElementById("device-list").addEventListener("change", (event) => {
-        activeDevice = event.target.value;
-        updateUI();
-    });
-
-    // Initialize with a default device
-    devices["Default Device"] = {
-        tasks: {},
-        activeTask: null,
-        previousTasks: [],
-    };
-    const defaultOption = new Option("Default Device", "Default Device");
-    document.getElementById("device-list").appendChild(defaultOption);
-    activeDevice = "Default Device";
-    document.getElementById("device-list").value = "Default Device";
-    updateUI();
-}
