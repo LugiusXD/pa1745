@@ -5,7 +5,7 @@ a = Analysis(
     ['start.py'],
     pathex=[],
     binaries=[],
-    datas=[('website/requirements.txt', 'website'), ('website/app.py', 'website'), ('website/writescript.py', 'website'), ('website/web', 'website/web'), ('website/times.csv', 'website'), ('website/mock_times.csv', 'website')],
+    datas=[('website/requirements.txt', 'website'), ('website/app.py', 'website'), ('website/writescript.py', 'website'), ('website/web', 'website/web'), ('website/times.csv', 'website')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
