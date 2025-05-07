@@ -35,6 +35,7 @@ with open(times_file, "a") as file:
                         elapsed = current_time - start_time
                         # Write row to file
                         file.write(f"{task},{start_time},{current_time},{elapsed}\n")
+                        file.flush()
                         
 
                     else:
