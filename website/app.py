@@ -29,7 +29,7 @@ task_colors = {
     "Task 6": "#FF9F40"
 }
 
-test = True  # Set to True for testing, False for production
+test = False  # Set to True for testing, False for production
 times_file = None
 
 if test:
