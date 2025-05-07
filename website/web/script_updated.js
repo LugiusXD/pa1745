@@ -11,6 +11,32 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 function initializeStartPage() {
+    // Fetch and populate the task dropdown
+    function updateTaskDropdown() {
+        fetch('/get_task_aliases')
+            .then(response => response.json())
+            .then(taskAliases => {
+                const taskSlotSelect = document.getElementById("task-slot");
+                taskSlotSelect.innerHTML = ""; // Clear existing options
+
+                // Ensure all task slots are present in the dropdown
+                const allTaskSlots = ["Task 1", "Task 2", "Task 3", "Task 4", "Task 5", "Task 6"];
+                allTaskSlots.forEach(slot => {
+                    const option = document.createElement("option");
+                    option.value = slot;
+                    option.textContent = `${slot} (${taskAliases[slot]?.alias || "Unassigned"})`;
+                    taskSlotSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error("Error fetching task aliases:", error);
+                alert("An error occurred while updating the task dropdown.");
+            });
+    }
+
+    // Call the function to update the dropdown on page load
+    updateTaskDropdown();
+
     // Assign a task to a slot
     document.getElementById("assign-task").addEventListener("click", () => {
         const taskSlot = document.getElementById("task-slot").value;
@@ -37,18 +63,8 @@ function initializeStartPage() {
                 // Clear the input field
                 document.getElementById("task-name").value = "";
 
-                // Update the task list in the dropdown
-                const taskSlotSelect = document.getElementById("task-slot");
-                taskSlotSelect.innerHTML = ""; // Clear existing options
-
-                // Ensure all task slots are present in the dropdown
-                const allTaskSlots = ["Task 1", "Task 2", "Task 3", "Task 4", "Task 5", "Task 6"];
-                allTaskSlots.forEach(slot => {
-                    const option = document.createElement("option");
-                    option.value = slot;
-                    option.textContent = `${slot} (${data.tasks[slot]?.name || "Unassigned"})`;
-                    taskSlotSelect.appendChild(option);
-                });
+                // Update the task dropdown
+                updateTaskDropdown();
             })
             .catch(error => {
                 console.error("Error assigning task:", error);
