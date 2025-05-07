@@ -3,11 +3,6 @@ document.addEventListener("DOMContentLoaded", function () {
     if (document.querySelector(".banner h1").textContent === "Track Your Time") {
         initializeStartPage();
     }
-
-    // Check if we are on the devices page
-    if (document.querySelector(".banner h1").textContent === "Devices") {
-        initializeDevicesPage();
-    }
 });
 
 function initializeStartPage() {
@@ -103,72 +98,6 @@ function initializeStartPage() {
     });
 }
 
-function initializeDevicesPage() {
-    let devices = {};
-    let activeDevice = null;
-
-    // Initialize the UI
-    function updateUI() {
-        if (!activeDevice) return;
-        const deviceData = devices[activeDevice];
-        document.getElementById("current-task-name").textContent = deviceData.activeTask || "None";
-        updatePreviousTasks();
-    }
-
-    // Add a new device
-    document.getElementById("add-device").addEventListener("click", () => {
-        const deviceName = prompt("Enter the name of the new device:");
-        if (deviceName && !devices[deviceName]) {
-            devices[deviceName] = {
-                tasks: {},
-                activeTask: null,
-                previousTasks: [],
-            };
-            const option = new Option(deviceName, deviceName);
-            document.getElementById("device-list").appendChild(option);
-            activeDevice = deviceName;
-            document.getElementById("device-list").value = deviceName;
-            updateUI();
-        } else {
-            alert("Device already exists or invalid name.");
-        }
-    });
-
-    // Remove the selected device
-    document.getElementById("remove-device").addEventListener("click", () => {
-        if (!activeDevice) {
-            alert("No device selected.");
-            return;
-        }
-        if (confirm(`Are you sure you want to remove the device "${activeDevice}"?`)) {
-            delete devices[activeDevice];
-            const deviceList = document.getElementById("device-list");
-            deviceList.remove(deviceList.selectedIndex);
-            activeDevice = null;
-            updateUI();
-        }
-    });
-
-    // Change the name of the selected device
-    document.getElementById("change-device").addEventListener("click", () => {
-        if (!activeDevice) {
-            alert("No device selected.");
-            return;
-        }
-        const newDeviceName = prompt("Enter the new name for the device:", activeDevice);
-        if (newDeviceName && !devices[newDeviceName]) {
-            devices[newDeviceName] = devices[activeDevice];
-            delete devices[activeDevice];
-            const deviceList = document.getElementById("device-list");
-            deviceList.options[deviceList.selectedIndex].text = newDeviceName;
-            deviceList.options[deviceList.selectedIndex].value = newDeviceName;
-            activeDevice = newDeviceName;
-            updateUI();
-        } else {
-            alert("Invalid name or device with this name already exists.");
-        }
-    });
-
     // Add a new task
     document.getElementById("add-task").addEventListener("click", () => {
         if (!activeDevice) {
@@ -251,21 +180,3 @@ function initializeDevicesPage() {
         });
     }
 
-    // Handle device selection
-    document.getElementById("device-list").addEventListener("change", (event) => {
-        activeDevice = event.target.value;
-        updateUI();
-    });
-
-    // Initialize with a default device
-    devices["Default Device"] = {
-        tasks: {},
-        activeTask: null,
-        previousTasks: [],
-    };
-    const defaultOption = new Option("Default Device", "Default Device");
-    document.getElementById("device-list").appendChild(defaultOption);
-    activeDevice = "Default Device";
-    document.getElementById("device-list").value = "Default Device";
-    updateUI();
-}
