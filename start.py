@@ -21,11 +21,11 @@ def install_dependencies():
 
 def start_website():
     print("Starting the Flask website...")
-    subprocess.Popen(["python", os.path.join(get_base_path(), "website", "app.py")])
+    return subprocess.Popen(["python", os.path.join(get_base_path(), "website", "app.py")])
 
 def start_writescript():
     print("Starting the writescript...")
-    subprocess.Popen(["python", os.path.join(get_base_path(), "website", "writescript.py")])
+    return subprocess.Popen(["python", os.path.join(get_base_path(), "website", "writescript.py")])
 
 def open_browser():
     # Wait a few seconds to ensure the Flask server is running
@@ -35,8 +35,17 @@ def open_browser():
 
 if __name__ == "__main__":
     install_dependencies()
-    start_website()
-    start_writescript()
+    website_process = start_website()
+    writescript_process = start_writescript()
     open_browser()
-    print("Website and writescript started successfully.")
+
+    print("Press Ctrl+C to stop the application.")
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("\nShutting down...")
+        website_process.terminate()
+        writescript_process.terminate()
+        print("Processes terminated. Goodbye!")
 

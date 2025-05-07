@@ -5,11 +5,19 @@ import csv
 import pandas as pd
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+import sys
+
+if getattr(sys, 'frozen', False):
+    # If running as a PyInstaller executable
+    base_path = sys._MEIPASS
+else:
+    # If running as a script
+    base_path = os.path.dirname(os.path.abspath(__file__))
 
 app = Flask(
     __name__,
-    static_folder='web',  # Serve static files from the 'web' folder
-    template_folder='web'  # Serve HTML files from the 'web' folder
+    static_folder=os.path.join(base_path, 'web'),
+    template_folder=os.path.join(base_path, 'web')
 )
 
 tasks = {}
