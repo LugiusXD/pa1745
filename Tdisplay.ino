@@ -8,26 +8,27 @@ const int button3Pin = 12;
 
 // Task state
 bool b1 = false, b2 = false, b3 = false;
-bool task1Active = false, task2Active = false, task3Active = false;
-bool task4Active = false, task5Active = false, task6Active = false;
+bool Task1Active = false, Task2Active = false, Task3Active = false;
+bool Task4Active = false, Task5Active = false, Task6Active = false;
 bool anyButtonPressed = false;
 unsigned long pressTime = 0;
 
 TFT_eSPI tft = TFT_eSPI();
-uint16_t taskColor = TFT_WHITE;
+uint16_t TaskColor = TFT_WHITE;
 
-// Display task
-void showTask(const char* taskLabel, uint16_t color) {
+// Display Task
+void showTask(const char* TaskLabel, uint16_t color) {
   tft.fillScreen(TFT_BLACK);
+  tft.setRotation(3);
   tft.setTextColor(color, TFT_BLACK);
   tft.setTextDatum(MC_DATUM);
-  tft.setTextSize(4);
-  tft.drawString(taskLabel, 160, 120);
-  Serial.println(String(taskLabel) + ": START");
+  tft.setTextSize(6);
+  tft.drawString(TaskLabel, 160, 120);
+  Serial.println(String(TaskLabel) + ": START");
 }
 
 // Fade out and print release
-void fadeOutTask(const char* taskLabel) {
+void fadeOutTask(const char* TaskLabel) {
   uint16_t fadeSteps[] = {TFT_DARKGREY, TFT_NAVY, TFT_BLACK};
   tft.setTextDatum(MC_DATUM);
   tft.setTextSize(4);
@@ -35,12 +36,12 @@ void fadeOutTask(const char* taskLabel) {
   for (int i = 0; i < 3; i++) {
     tft.fillScreen(TFT_BLACK);
     tft.setTextColor(fadeSteps[i], TFT_BLACK);
-    tft.drawString(taskLabel, 160, 120);
+    tft.drawString(TaskLabel, 160, 120);
     delay(150);
   }
 
   tft.fillScreen(TFT_BLACK);
-  Serial.println(String(taskLabel) + ": STOP");
+  Serial.println(String(TaskLabel) + ": STOP");
 }
 
 void setup() {
@@ -70,33 +71,33 @@ void loop() {
     b2 = digitalRead(button2Pin) == LOW;
     b3 = digitalRead(button3Pin) == LOW;
 
-    task1Active = task2Active = task3Active = false;
-    task4Active = task5Active = task6Active = false;
+    Task1Active = Task2Active = Task3Active = false;
+    Task4Active = Task5Active = Task6Active = false;
 
     if (b1 && b2 && b3) {
-      task6Active = true;
-      taskColor = TFT_ORANGE;
-      showTask("TASK 6", taskColor);
+      Task6Active = true;
+      TaskColor = TFT_ORANGE;
+      showTask("Task 6", TaskColor);
     } else if (b1 && b2) {
-      task4Active = true;
-      taskColor = TFT_CYAN;
-      showTask("TASK 4", taskColor);
+      Task4Active = true;
+      TaskColor = TFT_CYAN;
+      showTask("Task 4", TaskColor);
     } else if (b2 && b3) {
-      task5Active = true;
-      taskColor = TFT_MAGENTA;
-      showTask("TASK 5", taskColor);
+      Task5Active = true;
+      TaskColor = TFT_MAGENTA;
+      showTask("Task 5", TaskColor);
     } else if (b1 && !b2 && !b3) {
-      task1Active = true;
-      taskColor = TFT_GREEN;
-      showTask("TASK 1", taskColor);
+      Task1Active = true;
+      TaskColor = TFT_GREEN;
+      showTask("Task 1", TaskColor);
     } else if (b2 && !b1 && !b3) {
-      task2Active = true;
-      taskColor = TFT_BLUE;
-      showTask("TASK 2", taskColor);
+      Task2Active = true;
+      TaskColor = TFT_BLUE;
+      showTask("Task 2", TaskColor);
     } else if (b3 && !b1 && !b2) {
-      task3Active = true;
-      taskColor = TFT_YELLOW;
-      showTask("TASK 3", taskColor);
+      Task3Active = true;
+      TaskColor = TFT_YELLOW;
+      showTask("Task 3", TaskColor);
     }
 
     // Wait for release
@@ -106,12 +107,12 @@ void loop() {
       delay(10);
     }
 
-    if (task6Active) fadeOutTask("TASK 6");
-    if (task4Active) fadeOutTask("TASK 4");
-    if (task5Active) fadeOutTask("TASK 5");
-    if (task1Active) fadeOutTask("TASK 1");
-    if (task2Active) fadeOutTask("TASK 2");
-    if (task3Active) fadeOutTask("TASK 3");
+    if (Task6Active) fadeOutTask("Task 6");
+    if (Task4Active) fadeOutTask("Task 4");
+    if (Task5Active) fadeOutTask("Task 5");
+    if (Task1Active) fadeOutTask("Task 1");
+    if (Task2Active) fadeOutTask("Task 2");
+    if (Task3Active) fadeOutTask("Task 3");
 
     anyButtonPressed = false;
   }
