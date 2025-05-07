@@ -12,15 +12,6 @@ app = Flask(
     template_folder='web'  # Serve HTML files from the 'web' folder
 )
 
-# Secret key for session management
-app.secret_key = 'your_secret_key_here'
-
-# Hardcoded user credentials (for simplicity)
-users = {
-    "admin": "password123",
-    "user1": "mypassword"
-}
-
 tasks = {}
 total_times = {}
 removed_tasks = {}
@@ -53,33 +44,6 @@ def last_task():
         lines = f.readlines()
         last_line = lines[-1] if lines else ''
     return last_line
-
-
-@app.route('/login', methods=['POST'])
-def login():
-    data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
-
-    if username in users and users[username] == password:
-        session['username'] = username
-        return jsonify({'message': 'Login successful', 'username': username})
-    else:
-        return jsonify({'message': 'Invalid username or password'}), 401
-
-
-@app.route('/logout', methods=['POST'])
-def logout():
-    session.pop('username', None)
-    return jsonify({'message': 'Logged out successfully'})
-
-
-@app.route('/is_logged_in', methods=['GET'])
-def is_logged_in():
-    if 'username' in session:
-        return jsonify({'logged_in': True, 'username': session['username']})
-    else:
-        return jsonify({'logged_in': False})
 
 
 @app.route('/')
