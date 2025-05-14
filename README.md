@@ -1,4 +1,5 @@
 # pa1745
-timetracker
-Setup:
-To start everything go in to the dist folder and execute the start.exe.
+TimeTracker
+
+How to Setup:
+To start up the program, double click the .bat file called "TimeTracker.bat". It will start the device and the website.

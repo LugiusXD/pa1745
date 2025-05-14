@@ -27,7 +27,7 @@ if not os.path.exists(times_file):
 
 # Serial setup
 try:
-    ser = serial.Serial('COM7', 9600, timeout=1)
+    ser = serial.Serial('COM3', 9600, timeout=1)
 except SerialException as e:
     print(f"Error: Could not open serial port: {e}")
     ser = None
