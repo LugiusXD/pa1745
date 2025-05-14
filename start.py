@@ -8,14 +8,14 @@ import time
 def get_base_path():
     # If running as a PyInstaller executable, use the temporary _MEIPASS directory
     if getattr(sys, 'frozen', False):
-        return sys._MEIPASS
+        return os.path.dirname(sys.executable)
     # Otherwise, use the script's directory
     return os.path.dirname(os.path.abspath(__file__))
 
 def install_dependencies():
     # Use the correct path for requirements.txt
     base_path = get_base_path()
-    requirements_path = os.path.join(base_path, "website", "requirements.txt")
+    requirements_path = os.path.join(get_base_path(), "requirements.txt")
     print(f"Installing Python dependencies from: {requirements_path}")
     subprocess.run(["pip", "install", "-r", requirements_path], check=True)
 
