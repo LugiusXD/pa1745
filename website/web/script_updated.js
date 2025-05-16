@@ -72,47 +72,37 @@ function initializeStartPage() {
         fetch('/get_times')
             .then(response => response.json())
             .then(data => {
-                if (data.times) {
+                if (data.message) {
+                    alert(data.message);
+                } else {
+                    // Update the times table
                     const tableBody = document.getElementById("times-table-body");
-                    tableBody.innerHTML = ""; // Clear existing rows
-                    data.times.forEach(task => {
+                    tableBody.innerHTML = ""; // Clear the existing table
+
+                    data.times.forEach(time => {
                         const row = document.createElement("tr");
                         const taskCell = document.createElement("td");
-                        const timeCell = document.createElement("td");
+                        const elapsedTimeCell = document.createElement("td");
 
-                        taskCell.textContent = task.task; // Task name
-                        timeCell.textContent = task.elapsed_time; // Elapsed time
+                        taskCell.textContent = time.task;
+                        elapsedTimeCell.textContent = time.elapsed_time;
 
                         row.appendChild(taskCell);
-                        row.appendChild(timeCell);
+                        row.appendChild(elapsedTimeCell);
                         tableBody.appendChild(row);
                     });
-                } else {
-                    alert("No times found.");
+
+                    // Update the previous tasks list
+                    updatePreviousTasks();
                 }
             })
             .catch(error => {
-                console.error("Error fetching times:", error);
-                alert("An error occurred while fetching times.");
+                console.error("Error updating times:", error);
+                alert("An error occurred while updating times.");
             });
     });
 }
 
-    // Add a new task
-    document.getElementById("add-task").addEventListener("click", () => {
-        if (!activeDevice) {
-            alert("No device selected.");
-            return;
-        }
-        const taskName = prompt("Enter the name of the new task:");
-        if (taskName && !devices[activeDevice].tasks[taskName]) {
-            devices[activeDevice].tasks[taskName] = { time: 0 };
-            devices[activeDevice].activeTask = taskName;
-            updateUI();
-        } else {
-            alert("Task already exists or invalid name.");
-        }
-    });
 
     // Delete the current task
     document.getElementById("delete-task").addEventListener("click", () => {
@@ -155,28 +145,37 @@ function initializeStartPage() {
     });
 
     // Update the list of previous tasks
-    function updatePreviousTasks() {
-        const list = document.getElementById("previous-tasks-list");
-        list.innerHTML = "";
-        if (!activeDevice) return;
+function updatePreviousTasks() {
+  fetch('/api/previous-tasks')
+    .then(r => {
+      if (!r.ok) throw new Error("Failed to fetch previous tasks.");
+      return r.json();
+    })
+    .then(data => {
+      const dd = document.getElementById('previous-tasks-dropdown');
+      dd.innerHTML = '<option value="">-- Select a task --</option>';
+      data.tasks.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.task;
+        opt.textContent = `${t.task} – ${t.name} (${t.elapsed_time})`;
+        dd.appendChild(opt);
+      });
+    })
+    .catch(err => {
+      console.error(err);
+      alert("An error occurred while fetching previous tasks.");
+    });
+}
 
-        devices[activeDevice].previousTasks.forEach((task) => {
-            const li = document.createElement("li");
-            li.textContent = `${task.name} - ${task.time}s`;
+document.getElementById('reassign-selected-btn')
+  .addEventListener('click', () => {
+    const dd = document.getElementById('previous-tasks-dropdown');
+    if (!dd.value) return alert("Please select a task to reassign.");
+    // assuming you have a `reassignTask(id)` function:
+    reassignTask(dd.value);
+  });
 
-            const btn = document.createElement("button");
-            btn.textContent = "Continue";
-            btn.addEventListener("click", () => {
-                devices[activeDevice].tasks[task.name] = { time: task.time };
-                devices[activeDevice].activeTask = task.name;
-                devices[activeDevice].previousTasks = devices[activeDevice].previousTasks.filter(
-                    (t) => t.name !== task.name
-                );
-                updateUI();
-            });
+// call once on load, and again after "Update Times"
+updatePreviousTasks();
 
-            li.appendChild(btn);
-            list.appendChild(li);
-        });
-    }
 

@@ -5,19 +5,11 @@ import csv
 import pandas as pd
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-import sys
-
-if getattr(sys, 'frozen', False):
-    # If running as a PyInstaller executable
-    base_path = sys._MEIPASS
-else:
-    # If running as a script
-    base_path = os.path.dirname(os.path.abspath(__file__))
 
 app = Flask(
     __name__,
-    static_folder=os.path.join(base_path, 'web'),
-    template_folder=os.path.join(base_path, 'web')
+    static_folder=os.path.join('web'),
+    template_folder=os.path.join('web')
 )
 
 tasks = {}
@@ -37,13 +29,7 @@ task_colors = {
     "Task 6": "#FF9F40"
 }
 
-test = False  # Set to True for testing, False for production
-times_file = None
-
-if test:
-    times_file = os.path.join(os.path.dirname(__file__), 'mock_times.csv')
-else:
-    times_file = os.path.join(os.path.dirname(__file__), 'times.csv')
+times_file = os.path.join(os.path.dirname(__file__), 'times.csv')
 
 
 @app.route('/api/last-task')
@@ -68,17 +54,73 @@ def serve_static_files(filename):
 
 @app.route('/add_task', methods=['POST'])
 def add_task():
-    data = request.get_json()
-    task_slot = data.get('task_slot')  # e.g., "Task 1"
-    task_name = data.get('task_name')  # e.g., "My Custom Task"
+    try:
+        print("Received request to /add_task")
+        data = request.get_json()
+        task_slot = data.get('task_slot')  # e.g., "Task 1"
+        task_name = data.get('task_name')  # e.g., "My Custom Task"
 
-    if not task_slot or not task_name:
-        return jsonify({'message': 'Task slot and task name are required.'}), 400
+        if not task_slot or not task_name:
+            return jsonify({'message': 'Task slot and task name are required.'}), 400
 
-    # Update or assign the alias for the given task slot
-    tasks[task_slot] = {'name': task_name, 'start_time': None}
-    task_aliases[task_slot] = task_name  # Save the alias
-    return jsonify({'message': f'Task {task_name} assigned to {task_slot}.', 'tasks': tasks})
+        print(f"Assigning task: {task_name} to slot: {task_slot}")
+
+        # Check if the task slot already has a task assigned
+        if task_slot in tasks:
+            print(f"Task slot {task_slot} already has a task assigned.")
+            previous_task_name = tasks[task_slot]['name']
+
+            # Calculate total elapsed time for the previous task from times.csv
+            total_elapsed_time = 0
+            updated_rows = []
+            with open(times_file, 'r') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    if row['Task'] == task_slot:
+                        elapsed_time_parts = list(map(int, row['Elapsed Time'].split(":")))
+                        total_elapsed_time += elapsed_time_parts[0] * 3600 + elapsed_time_parts[1] * 60 + elapsed_time_parts[2]
+                    else:
+                        updated_rows.append(row)
+
+            # Write back the updated rows to times.csv
+            with open(times_file, 'w', newline='') as f:
+                writer = csv.DictWriter(f, fieldnames=['Task', 'Start Time', 'Stop Time', 'Elapsed Time'])
+                writer.writeheader()
+                writer.writerows(updated_rows)
+
+            # Transfer the previous task to previous_tasks.csv only if it was removed from times.csv
+            if total_elapsed_time > 0:
+                elapsed_time_str = str(timedelta(seconds=total_elapsed_time))
+                print(f"Transferring task {previous_task_name} to previous_tasks.csv with elapsed time {elapsed_time_str}")
+
+                previous_tasks_file = os.path.join(os.path.dirname(__file__), 'previous_tasks.csv')
+                write_header = not os.path.exists(previous_tasks_file)  # Check if the file exists
+
+                try:
+                    with open(previous_tasks_file, 'a', newline='') as f:
+                        writer = csv.writer(f)
+                        if write_header:
+                            writer.writerow(['Task', 'Name', 'Elapsed Time'])  # Write the header if the file is new
+                        writer.writerow([task_slot, previous_task_name, elapsed_time_str])  # Write the task data
+                    print(f"Task {previous_task_name} successfully written to previous_tasks.csv.")
+                except Exception as e:
+                    print(f"Error writing to previous_tasks.csv: {str(e)}")
+            else:
+                print(f"Task {previous_task_name} has no tracked time and will not be transferred.")
+
+            # Remove the task from memory
+            tasks.pop(task_slot, None)
+            total_times.pop(task_slot, None)
+
+        # Assign the new task
+        tasks[task_slot] = {'name': task_name, 'start_time': None}
+        task_aliases[task_slot] = task_name  # Save the alias
+        print(f"New task {task_name} assigned to slot {task_slot}")
+        return jsonify({'message': f'Task {task_name} assigned to {task_slot}.', 'tasks': tasks})
+
+    except Exception as e:
+        print(f"Error in /add_task: {str(e)}")
+        return jsonify({'message': f'An error occurred: {str(e)}'}), 500
 
 
 @app.route('/remove_task', methods=['POST'])
@@ -106,30 +148,18 @@ def start_timer():
 @app.route('/stop_timer', methods=['POST'])
 def stop_timer():
     data = request.get_json()
-    task_id = data['task_id']
-    task_name = data['task_name']
-    stop_time = datetime.now()
-    start_time = tasks[task_id].get('start_time')
-    if start_time:
-        elapsed_time = (stop_time - start_time).total_seconds()
-        total_times[task_id] = total_times.get(task_id, 0) + elapsed_time
-        elapsed_time_str = str(timedelta(seconds=elapsed_time))
+    task_slot = data.get('task_slot')
 
-        # Write to CSV file
-        write_header = not os.path.exists(times_file)  # Check if the file exists
-        with open(times_file, 'a', newline='') as f:
-            writer = csv.writer(f)
-            if write_header:
-                writer.writerow(['Task', 'Start Time', 'Stop Time', 'Elapsed Time'])  # Write header
-            writer.writerow([task_name, start_time.strftime("%Y-%m-%d %H:%M:%S"), stop_time.strftime("%Y-%m-%d %H:%M:%S"), elapsed_time_str])
+    if task_slot not in tasks or tasks[task_slot]['start_time'] is None:
+        return jsonify({'message': 'No active timer for this task slot.'}), 400
 
-        tasks[task_id]['start_time'] = None
-        return jsonify({
-            'message': f'Timer stopped for {task_name}',
-            'start_time': start_time.strftime('%Y-%m-%d %H:%M:%S'),
-            'stop_time': stop_time.strftime('%Y-%m-%d %H:%M:%S'),
-            'time': elapsed_time_str
-        })
+    start_time = tasks[task_slot]['start_time']
+    elapsed_time = (datetime.now() - start_time).total_seconds()
+    total_times[task_slot] = total_times.get(task_slot, 0) + elapsed_time
+
+    tasks[task_slot]['start_time'] = None
+    print(f"Timer stopped for {task_slot}. Total time: {total_times[task_slot]} seconds.")
+    return jsonify({'message': f'Timer stopped for {task_slot}.', 'elapsed_time': elapsed_time})
 
 
 @app.route('/sort_times', methods=['POST'])
@@ -149,33 +179,36 @@ def get_times():
 
     times_data = {}
     try:
+        # Read completed sessions from times.csv
         with open(times_file, 'r') as f:
             reader = csv.DictReader(f)
             for row in reader:
                 task_name = row['Task']
                 elapsed_time = row['Elapsed Time']
-                # Convert elapsed time to seconds
                 elapsed_seconds = sum(
-                    int(x) * 60 ** i for i, x in enumerate(reversed(elapsed_time.split(":")))
+                    int(x) * 60 ** i for i, x in enumerate(reversed(elapsed_time.split(':')))
                 )
-                if task_name in times_data:
-                    times_data[task_name] += elapsed_seconds
-                else:
-                    times_data[task_name] = elapsed_seconds
+                times_data[task_name] = times_data.get(task_name, 0) + elapsed_seconds
+
+        # **Removed previous_tasks.csv auto-transfer to avoid moving active/unassigned tasks**
+        # Transfer of completed tasks should only happen in the assignment or stop endpoints.
 
     except Exception as e:
-        return jsonify({'message': f'Error reading times file: {str(e)}'}), 500
+        print(f"Error in /get_times: {e}")
+        return jsonify({'message': f'Error reading times file: {e}'}), 500
 
-    # Map task names to their assigned names
+    # Prepare response
     parsed_times = []
-    for task, elapsed_time in times_data.items():
-        assigned_name = tasks.get(task, {}).get('name', task)  # Use assigned name if available
+    for task, elapsed_seconds in times_data.items():
+        assigned_name = tasks.get(task, {}).get('name', task)
         parsed_times.append({
-            "task": assigned_name,
-            "elapsed_time": str(timedelta(seconds=int(elapsed_time)))
+            'task': assigned_name,
+            'elapsed_time': str(timedelta(seconds=int(elapsed_seconds)))
         })
 
+    print("Returning times data...")
     return jsonify({'times': parsed_times})
+
 
 
 @app.route('/api/times', methods=['GET'])
@@ -343,6 +376,41 @@ def generate_pdf():
     c.save()
 
     return send_from_directory(os.getcwd(), pdf_path, as_attachment=True)
+
+
+@app.route('/api/previous-tasks', methods=['GET'])
+def get_previous_tasks():
+    previous_tasks_file = os.path.join(os.path.dirname(__file__), 'previous_tasks.csv')
+    tasks = []
+
+    if os.path.exists(previous_tasks_file):
+        with open(previous_tasks_file, newline='') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                # Skip completely empty or incomplete rows
+                if not row.get('Task') or not row.get('Name') or not row.get('Elapsed Time'):
+                    continue
+                # Skip zero-duration entries
+                if row['Elapsed Time'] == "0:00:00":
+                    continue
+
+                tasks.append({
+                    'task': row['Task'],
+                    'name': row['Name'],
+                    'elapsed_time': row['Elapsed Time']
+                })
+
+    # Dedupe by (task, name, elapsed_time)
+    unique_tasks = []
+    seen = set()
+    for t in tasks:
+        key = (t['task'], t['name'], t['elapsed_time'])
+        if key not in seen:
+            seen.add(key)
+            unique_tasks.append(t)
+
+    return jsonify({'tasks': unique_tasks})
+
 
 
 if __name__ == '__main__':

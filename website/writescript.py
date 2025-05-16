@@ -4,20 +4,12 @@ from serial.serialutil import SerialException
 from datetime import datetime
 import string
 import pandas as pd
-from app import test
 import csv
 import sys
 
-# Determine the base path
-if getattr(sys, 'frozen', False):
-    # If running as a PyInstaller executable
-    base_path = sys._MEIPASS
-else:
-    # If running as a script
-    base_path = os.path.dirname(os.path.abspath(__file__))
 
 # Path to times.csv
-times_file = os.path.join(base_path, 'times.csv')
+times_file = os.path.join('times.csv')
 
 # Ensure the file exists
 if not os.path.exists(times_file):

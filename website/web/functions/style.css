@@ -1,200 +1,209 @@
-/* Förbättrad box-design */
+/* ======================================
+   Reset & Base
+   ====================================== */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+}
+
+/* ======================================
+   Navbar styles (desktop)
+   ====================================== */
+.ul-navbar,
+.ul-task {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background-color: #333;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1000;
+}
+
+.ul-navbar li,
+.ul-task li {
+  float: left;
+}
+
+.ul-navbar li a,
+.ul-task li a {
+  display: block;
+  color: white;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+}
+
+.ul-navbar li a:hover,
+.ul-task li a:hover {
+  background-color: #111;
+}
+
+.active {
+  background-color: #04AA6D !important;
+}
+
+.right {
+  float: right !important;
+}
+
+/* ======================================
+   Banner
+   ====================================== */
+.banner {
+  background-color: #4c684c;
+  color: white;
+  text-align: center;
+  padding: 1em;
+  font-size: 1.5em;
+  font-weight: bold;
+  box-sizing: border-box;
+  margin-top: 50px;  /* push below fixed nav */
+}
+
+/* ======================================
+   Generic “box” container
+   ====================================== */
 .box {
-    border: 2px solid #3a3a3a; /* Mörkare grå för bättre kontrast */
-    background-color: #ffffff; /* Vit bakgrund för bättre läsbarhet */
-    padding: 20px; /* Ökat inre utrymme */
-    width: 250px; /* Lätt ökad bredd */
-    margin: 8px; /* Ökat avstånd mellan boxarna */
-    border-radius: 12px; /* Rundade hörn för mjukare design */
-    box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.1); /* Elegant skugga */
-    float: left; /* Flytande layout */
-    transition: transform 0.2s ease-in-out, box-shadow 0.3s ease-in-out;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px auto;
+  max-width: 600px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  overflow: auto;    /* contain any floats inside */
 }
 
-/* Effekt vid hover */
-.box:hover {
-    transform: translateY(-5px); /* Lätt lyft */
-    box-shadow: 6px 6px 20px rgba(0, 0, 0, 0.2); /* Djupare skugga */
+.box h3 {
+  margin-top: 0;
+  font-size: 1.5em;
+  color: #333;
 }
 
-/* Statistik och tabellstil */
-.statistics {
-    width: 350px;
+.box select,
+.box input[type="text"],
+.box input[type="number"],
+.box table {
+  width: 100%;
+  margin: 8px 0;
 }
 
-.stats-table {
-    width: 100%;
-    border-collapse: collapse;
+.box button {
+  margin: 8px 4px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
-.stats-table td, .stats-table th {
-    border: 1px solid #4c4c4c;
-    padding: 8px;
-    text-align: center;
-    background-color: #f8f8f8;
-}
-
-/* Lista över tidigare uppgifter */
-.previous-tasks {
-    width: 350px;
-}
-
-.previous-tasks ul {
-    list-style-type: none;
-    padding: 0;
-}
-
-.previous-tasks li {
-    border: 1px solid #3a3a3a;
-    padding: 10px;
-    margin: 6px 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: #f0f0f0;
-    border-radius: 6px;
-}
-
-/* Knappar i tidigare uppgifter */
-.previous-tasks button {
-    margin-left: 10px;
-    padding: 6px 12px;
-    background-color: #ff4d4d;
-    color: white;
-    border-radius: 6px;
-    transition: background-color 0.2s ease-in-out;
-}
-
-/* Hover-effekt för borttagningsknapp */
-.previous-tasks button:hover {
-    background-color: #cc0000;
-}
-
-/* Canvas-stil */
-canvas {
-    max-width: 100%;
-    height: 300px;
-    border-radius: 8px;
-}
-
-/* Diagram-container */
-.chart-container {
-    display: flex;
-    justify-content: center;
-    gap: 20px; /* Space between the charts */
-    margin: 20px auto;
-}
-
-.chart {
-    width: 45%; /* Adjust the width of each chart */
-    text-align: center;
-}
-
-/* Primär grön knapp */
 .btn-primary {
-    background-color: #4CAF50;
-    color: white;
-    padding: 12px;
-    font-size: 16px;
-    font-weight: bold;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.2s, transform 0.2s;
-    display: block;
-    width: 100%;
-    margin: 5px;
+  background-color: #04AA6D;
+  color: white;
 }
 
 .btn-primary:hover {
-    background-color: #45a049;
-    transform: translateY(-2px);
+  background-color: #038a57;
 }
 
-.btn-primary:active {
-    background-color: #3e8e41;
-    transform: translateY(1px);
-}
-
-/* Farlig röd knapp */
 .btn-danger {
-    background-color: #8a2020;
-    color: white;
-    padding: 12px;
-    font-size: 16px;
-    font-weight: bold;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.2s, transform 0.2s;
-    display: block;
-    width: 100%;
+  background-color: #d9534f;
+  color: white;
 }
 
 .btn-danger:hover {
-    background-color: #790303;
-    transform: translateY(-2px);
+  background-color: #c9302c;
 }
 
-.btn-danger:active {
-    background-color: #a00000;
-    transform: translateY(1px);
+/* ======================================
+   Stats Table
+   ====================================== */
+.stats-table {
+  width: 100%;
+  border-collapse: collapse;
 }
 
-/* Sekundär blå knapp */
-.btn-secondary {
-    background-color: #007BFF;
-    color: white;
-    padding: 12px;
-    font-size: 16px;
-    font-weight: bold;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.2s, transform 0.2s;
-    display: block;
-    width: 100%;
+.stats-table th,
+.stats-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
 }
 
-.btn-secondary:hover {
-    background-color: #0056b3;
-    transform: translateY(-2px);
+.stats-table th {
+  background-color: #f2f2f2;
+  font-weight: bold;
 }
 
-.btn-secondary:active {
-    background-color: #004494;
-    transform: translateY(1px);
+/* ======================================
+   Cube Layout
+   ====================================== */
+.cube-layout {
+  display: grid;
+  grid-template-columns: repeat(4, 100px);
+  grid-template-rows: repeat(3, 100px);
+  gap: 1px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
 }
 
-/* Menyknappar och åtgärdsknappar */
-.menu button, .task-actions button {
-    margin: 8px 0;
+.cube-side {
+  width: 100px;
+  height: 100px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 20px;
+  border: 2px solid #000;
+  background-color: #f0f0f0;
+  position: relative;
 }
 
-.btn-yes {
-    background-color: #4CAF50;
-    color: white;
-    padding: 4px;
-    font-size: 12px;
-    font-weight: bold;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.2s, transform 0.2s;
-    width: auto;
-    margin: 5px;
+.cube-side.active {
+  background-color: #4CAF50;
+  color: white;
 }
 
-.btn-no {
-    background-color: #8a2020;
-    color: white;
-    padding: 4px;
-    font-size: 12px;
-    font-weight: bold;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.2s, transform 0.2s;
-    width: auto;
-    margin: 5px;
+/* ======================================
+   Timer Text
+   ====================================== */
+.timer {
+  font-size: 18px;
+  margin-top: 10px;
+}
+
+/* ======================================
+   Previous Tasks Overrides
+   ====================================== */
+.box.previous-tasks {
+  /* ensure it wraps any floats inside */
+  overflow: auto;
+}
+
+#previous-tasks-list {
+  list-style: disc inside;
+  margin: 0;
+  padding: 0;
+}
+
+#previous-tasks-list li {
+  float: none !important;                /* cancel global floats */
+  display: flex;                         /* align text + button */
+  justify-content: space-between;
+  align-items: center;
+  margin: 8px 0;                         /* spacing between items */
+}
+
+.dropdown-container {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+#previous-tasks-dropdown {
+  flex: 1;
+  padding: 8px;
 }
