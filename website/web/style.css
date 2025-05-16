@@ -1,20 +1,10 @@
 body {
   margin: 0;
   padding: 0;
+  font-family: Arial, sans-serif;
 }
 
-    
-.ul-task {
-  list-style-type: none;
-  margin: 0;
-  padding: 0;
-  background-color: #333;
-  position: fixed;
-  top: 0;
-  width: 100%;
-  z-index: 1; /* Gör så att menyn är över andra element */
-}
-
+/* Navigation bar */
 .ul-navbar {
   list-style-type: none;
   margin: 0;
@@ -23,14 +13,14 @@ body {
   position: fixed;
   top: 0;
   width: 100%;
-  z-index: 1; /* Gör så att menyn är över andra element */
+  z-index: 1;
 }
 
-li {
+.ul-navbar li {
   float: left;
 }
 
-li a {
+.ul-navbar li a {
   display: block;
   color: white;
   text-align: center;
@@ -38,109 +28,99 @@ li a {
   text-decoration: none;
 }
 
-
-li a:hover:not(.active) {
+.ul-navbar li a:hover:not(.active) {
   background-color: #111;
 }
 
-.active {
+.ul-navbar .active {
   background-color: #04AA6D;
 }
 
-.right {
-  float: right;
-}
-
-
-/*banner*/
+/* Banner */
 .banner {
-  background-color: #4c684c; /* Grön bakgrund */
-  color: white; /* Vit text */
+  background-color: #4c684c;
+  color: white;
   text-align: center;
-  padding: 1em; /* Anpassad padding istället för en fast pixelstorlek */
-  font-size: 1.5em; /* Relativ fontstorlek */
+  padding: 1em;
+  font-size: 1.5em;
   font-weight: bold;
-  
-  width: 100%; /* Fyll hela skärmens bredd */
-  margin: 0; /* Ingen yttre marginal */
-  box-sizing: border-box; /* Förhindrar att padding påverkar bredden */
-  margin-top: 50px; /* Justera för att skapa mellanrum under den fasta menyn */
-  z-index: 0; /* Gör så att bannern hamnar under menyn */
-  
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 50px;
 }
 
 /* General box styling */
 .box {
-  background-color: #f9f9f9; /* Light gray background */
-  border: 1px solid #ddd; /* Light border */
-  border-radius: 8px; /* Rounded corners */
-  padding: 16px; /* Inner spacing */
-  margin: 16px auto; /* Outer spacing and center alignment */
-  max-width: 600px; /* Limit the width of the box */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px auto;
+  max-width: 600px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 /* Headings inside boxes */
 .box h3 {
-  margin-top: 0; /* Remove top margin */
-  font-size: 1.5em; /* Slightly larger font size */
-  color: #333; /* Darker text color */
+  margin-top: 0;
+  font-size: 1.5em;
+  color: #333;
 }
 
-/* Buttons inside boxes */
+/* Buttons */
 .box button {
-  margin: 8px 4px; /* Add spacing between buttons */
-  padding: 8px 12px; /* Button padding */
-  border: none; /* Remove default border */
-  border-radius: 4px; /* Rounded corners */
-  cursor: pointer; /* Pointer cursor on hover */
+  margin: 8px 4px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
 .box button.btn-primary {
-  background-color: #04AA6D; /* Green background */
-  color: white; /* White text */
+  background-color: #04AA6D;
+  color: white;
 }
 
 .box button.btn-primary:hover {
-  background-color: #038a57; /* Darker green on hover */
+  background-color: #038a57;
 }
 
 .box button.btn-danger {
-  background-color: #d9534f; /* Red background */
-  color: white; /* White text */
+  background-color: #d9534f;
+  color: white;
 }
 
 .box button.btn-danger:hover {
-  background-color: #c9302c; /* Darker red on hover */
+  background-color: #c9302c;
 }
 
-/* Center the content of the boxes */
+/* Inputs and Selects */
 .box select,
 .box input,
 .box table {
-  width: 100%; /* Full width */
-  margin: 8px 0; /* Spacing between elements */
+  width: 100%;
+  margin: 8px 0;
 }
 
-/* Table styling for statistics */
+/* Table styling */
 .stats-table {
-  width: 100%; /* Full width */
-  border-collapse: collapse; /* Remove gaps between cells */
+  width: 100%;
+  border-collapse: collapse;
 }
 
 .stats-table th,
 .stats-table td {
-  border: 1px solid #ddd; /* Light border */
-  padding: 8px; /* Inner spacing */
-  text-align: left; /* Align text to the left */
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
 }
 
 .stats-table th {
-  background-color: #f2f2f2; /* Light gray background for headers */
-  font-weight: bold; /* Bold text */
+  background-color: #f2f2f2;
+  font-weight: bold;
 }
 
-/*cube config*/
+/* Cube layout */
 .cube-layout {
   display: grid;
   grid-template-columns: repeat(4, 100px);
@@ -161,19 +141,22 @@ li a:hover:not(.active) {
   border: 2px solid #000;
   background-color: #f0f0f0;
   position: relative;
-  } 
-
-.timer {
-  font-size: 14px;
-  margin-top: 5px;
-  }
-
-.active {
-  background-color: #4CAF50;
-  color: white;
-  }
+}
 
 .timer {
   font-size: 18px;
   margin-top: 10px;
+}
+
+.active {
+  background-color: #4CAF50;
+  color: white;
+}
+
+/* Responsive tweaks (optional for smaller screens) */
+@media (max-width: 650px) {
+  .cube-layout {
+    grid-template-columns: repeat(3, 100px);
+    grid-template-rows: repeat(4, 100px);
   }
+}
