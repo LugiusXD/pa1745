@@ -7,20 +7,18 @@
     
     <style>
       /* Placering i grid */
-        #side1 { grid-column: 2; grid-row: 1; }
-        #side2 { grid-column: 2; grid-row: 2; }
-        #side3 { grid-column: 1; grid-row: 2; }
-        #side4 { grid-column: 3; grid-row: 2; }
-        #side5 { grid-column: 2; grid-row: 3; }
-        #side6 { grid-column: 4; grid-row: 2; }
-  
-      </style>
-
+      #side1 { grid-column: 2; grid-row: 1; }
+      #side2 { grid-column: 2; grid-row: 2; }
+      #side3 { grid-column: 1; grid-row: 2; }
+      #side4 { grid-column: 3; grid-row: 2; }
+      #side5 { grid-column: 2; grid-row: 3; }
+      #side6 { grid-column: 4; grid-row: 2; }
+    </style>
   </head>
   <body>  
     <ul class="ul-navbar">
-        <li><a class="active" href="index.html">Startpage</a></li>
-        <li><a href="statistic.html">Statistic</a></li>
+      <li><a class="active" href="index.html">Startpage</a></li>
+      <li><a href="statistic.html">Statistic</a></li>
     </ul>
 
     <div class="banner">
@@ -31,12 +29,12 @@
     <div class="box task">
       <h3>Assign Task</h3>
       <select id="task-slot">
-          <option value="Task 1">Task 1</option>
-          <option value="Task 2">Task 2</option>
-          <option value="Task 3">Task 3</option>
-          <option value="Task 4">Task 4</option>
-          <option value="Task 5">Task 5</option>
-          <option value="Task 6">Task 6</option>
+        <option value="Task 1">Task 1</option>
+        <option value="Task 2">Task 2</option>
+        <option value="Task 3">Task 3</option>
+        <option value="Task 4">Task 4</option>
+        <option value="Task 5">Task 5</option>
+        <option value="Task 6">Task 6</option>
       </select>
       <input type="text" id="task-name" placeholder="Enter task name" />
       <button class="btn-primary" id="assign-task">Assign Task</button>
@@ -46,25 +44,22 @@
     <div class="box statistics">
       <h3>Statistics</h3>
       <table class="stats-table">
-          <tr><th>Task</th><th>Elapsed Time</th></tr>
-          <tbody id="times-table-body"></tbody>
+        <tr><th>Task</th><th>Elapsed Time</th></tr>
+        <tbody id="times-table-body"></tbody>
       </table>
       <button class="btn-primary" id="update-times">Update Times</button>
     </div>
 
-    <!-- Previous Tasks Section -->
-    <!-- Previous Tasks Section -->
+    <!-- Updated Previous Tasks Section -->
     <div class="box previous-tasks">
       <h3>Previous Tasks</h3>
-      <div class="dropdown-container">
-        <select id="previous-tasks-dropdown">
-          <option value="">-- Select a task --</option>
-        </select>
-        <button id="reassign-selected-btn" class="btn-primary">Reassign</button>
-      </div>
+      <table class="stats-table">
+        <tr><th>Task</th><th>Elapsed Time</th></tr>
+        <tbody id="previous-tasks-body"></tbody>
+      </table>
     </div>
 
-
+    <!-- Cube Display -->
     <div class="box cube-layout cube">
       <h3 id="active-task-display">Active: -</h3>
       <div id="side1" class="cube-side">Side 1</div>
@@ -76,190 +71,144 @@
     </div>
 
     <script>
-      // Get the modal
-      var modal = document.getElementById('id01');
-      // When the user clicks anywhere outside of the modal, close it
-      window.onclick = function(event) {
-          if (event.target == modal) {
-              modal.style.display = "none";
-          }
-      }
-      // Get the modal
-      var modal = document.getElementById('id01');
-        // When the user clicks anywhere outside of the modal, close it
-        window.onclick = function(event) {
-            if (event.target == modal) {
-                modal.style.display = "none";
-            }
-        }
-    
-        // box
-        const taskToSideId = {
-            "Task 1": "side1",
-            "Task 2": "side2",
-            "Task 3": "side3",
-            "Task 4": "side4",
-            "Task 5": "side5",
-            "Task 6": "side6"
-          };
-    
-        let lastActiveSide = null;
-    
-          function updateActiveSide() {
-          fetch('/api/last-task')
-            .then(response => response.text())
-            .then(text => {
-              const lines = text.trim().split("\n");
-              const lastLine = lines[lines.length - 1];  // Ta den sista raden
-              const [task] = lastLine.split(",", 3); // Vi tar bara uppgiften (Task) från raden
-    
-              const sideId = taskToSideId[task.trim()];
-    
-              if (sideId && sideId !== lastActiveSide) {
-                if (lastActiveSide) {
-                  const oldEl = document.getElementById(lastActiveSide);
-                  if (oldEl) oldEl.classList.remove("active");
-                }
-    
-                const newEl = document.getElementById(sideId);
-                if (newEl) newEl.classList.add("active");
-    
+      const taskToSideId = {
+        "Task 1": "side1",
+        "Task 2": "side2",
+        "Task 3": "side3",
+        "Task 4": "side4",
+        "Task 5": "side5",
+        "Task 6": "side6"
+      };
+
+      let lastActiveSide = null;
+
+      function updateActiveSide() {
+        fetch('/api/last-task')
+          .then(response => response.text())
+          .then(text => {
+            const lines = text.trim().split("\n");
+            const lastLine = lines[lines.length - 1];
+            const [task] = lastLine.split(",", 3);
+
+            const sideId = taskToSideId[task.trim()];
+            if (sideId && sideId !== lastActiveSide) {
+              if (lastActiveSide) {
+                const oldEl = document.getElementById(lastActiveSide);
+                if (oldEl) oldEl.classList.remove("active");
+              }
+              const newEl = document.getElementById(sideId);
+              if (newEl) newEl.classList.add("active");
+
               lastActiveSide = sideId;
             }
-    
-            // Uppdatera texten på sidan
+
             document.getElementById("active-task-display").textContent = "Active: " + task.trim();
           })
           .catch(error => console.error("Fel vid uppdatering:", error));
-        }
-    
-        updateActiveSide();
-        setInterval(updateActiveSide, 2000);
-      
-      // Fetch and display previous tasks
-      function updatePreviousTasks() {
-          fetch('/api/previous-tasks')
-              .then(response => response.json())
-              .then(data => {
-                  const list = document.getElementById("previous-tasks-list");
-                  list.innerHTML = ""; // Clear the existing list
-  
-                  data.tasks.forEach(task => {
-                      const li = document.createElement("li");
-                      li.textContent = `${task.task} - ${task.name} (${task.elapsed_time})`;
-  
-                      // Optional: Add a button to reassign the task
-                      const btn = document.createElement("button");
-                      btn.textContent = "Reassign";
-                      btn.addEventListener("click", () => {
-                          document.getElementById("task-slot").value = task.task;
-                          document.getElementById("task-name").value = task.name;
-                      });
-  
-                      li.appendChild(btn);
-                      list.appendChild(li);
-                  });
-              })
-              .catch(error => console.error("Error fetching previous tasks:", error));
       }
-  
-      // Call the function to update the list on page load
+
+      updateActiveSide();
+      setInterval(updateActiveSide, 2000);
+
+      function updatePreviousTasks() {
+        fetch('/api/previous-tasks')
+          .then(response => response.json())
+          .then(data => {
+            const tableBody = document.getElementById("previous-tasks-body");
+            tableBody.innerHTML = "";
+
+            data.tasks.forEach(task => {
+              const row = document.createElement("tr");
+              const taskCell = document.createElement("td");
+              const elapsedTimeCell = document.createElement("td");
+
+              taskCell.textContent = `${task.task} – ${task.name}`;
+              elapsedTimeCell.textContent = task.elapsed_time;
+
+              row.appendChild(taskCell);
+              row.appendChild(elapsedTimeCell);
+              tableBody.appendChild(row);
+            });
+          })
+          .catch(error => console.error("Error fetching previous tasks:", error));
+      }
+
       updatePreviousTasks();
 
       document.addEventListener("DOMContentLoaded", () => {
         const assignTaskButton = document.getElementById("assign-task");
-    
-        // Remove any existing event listeners to avoid duplicates
+
         assignTaskButton.replaceWith(assignTaskButton.cloneNode(true));
-    
-        // Add the event listener
-        assignTaskButton.addEventListener("click", () => {
-            const taskSlot = document.getElementById("task-slot").value;
-            const taskName = document.getElementById("task-name").value;
-    
-            if (!taskName) {
-                alert("Please enter a task name.");
-                return;
-            }
-    
-            fetch('/add_task', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ task_slot: taskSlot, task_name: taskName })
-            })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.json().then(err => {
-                            throw new Error(err.message || "An error occurred while assigning the task.");
-                        });
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.message) {
-                        alert(data.message);
-                    } else {
-                        alert("Failed to assign task.");
-                    }
-    
-                    // Clear the input field
-                    document.getElementById("task-name").value = "";
-    
-                    // Update the task dropdown and previous tasks
-                    updateTaskDropdown();
-                    updatePreviousTasks();
-                })
-                .catch(error => {
-                    console.error("Error assigning task:", error);
-                    alert(error.message || "An error occurred while assigning the task.");
+
+        document.getElementById("assign-task").addEventListener("click", () => {
+          const taskSlot = document.getElementById("task-slot").value;
+          const taskName = document.getElementById("task-name").value;
+
+          if (!taskName) {
+            alert("Please enter a task name.");
+            return;
+          }
+
+          fetch('/add_task', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ task_slot: taskSlot, task_name: taskName })
+          })
+            .then(response => {
+              if (!response.ok) {
+                return response.json().then(err => {
+                  throw new Error(err.message || "An error occurred while assigning the task.");
                 });
+              }
+              return response.json();
+            })
+            .then(data => {
+              alert(data.message || "Failed to assign task.");
+              document.getElementById("task-name").value = "";
+              updateTaskDropdown();
+              updatePreviousTasks();
+            })
+            .catch(error => {
+              console.error("Error assigning task:", error);
+              alert(error.message || "An error occurred while assigning the task.");
+            });
         });
 
         document.getElementById("update-times").addEventListener("click", () => {
-            console.log("Fetching times from /get_times...");
-            fetch('/get_times')
-                .then(response => {
-                    if (!response.ok) {
-                        console.error("Error response from /get_times:", response);
-                        return response.json().then(err => {
-                            throw new Error(err.message || "An error occurred while updating times.");
-                        });
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log("Received data from /get_times:", data);
-                    if (data.message) {
-                        alert(data.message);
-                    } else {
-                        // Update the times table
-                        const tableBody = document.getElementById("times-table-body");
-                        tableBody.innerHTML = ""; // Clear the existing table
-    
-                        data.times.forEach(time => {
-                            const row = document.createElement("tr");
-                            const taskCell = document.createElement("td");
-                            const elapsedTimeCell = document.createElement("td");
-    
-                            taskCell.textContent = time.task;
-                            elapsedTimeCell.textContent = time.elapsed_time;
-    
-                            row.appendChild(taskCell);
-                            row.appendChild(elapsedTimeCell);
-                            tableBody.appendChild(row);
-                        });
-    
-                        // Update the previous tasks list
-                        updatePreviousTasks();
-                    }
-                })
-                .catch(error => {
-                    console.error("Error updating times:", error);
-                    alert(error.message || "An error occurred while updating times.");
+          fetch('/get_times')
+            .then(response => {
+              if (!response.ok) {
+                return response.json().then(err => {
+                  throw new Error(err.message || "An error occurred while updating times.");
                 });
+              }
+              return response.json();
+            })
+            .then(data => {
+              const tableBody = document.getElementById("times-table-body");
+              tableBody.innerHTML = "";
+
+              data.times.forEach(time => {
+                const row = document.createElement("tr");
+                const taskCell = document.createElement("td");
+                const elapsedTimeCell = document.createElement("td");
+
+                taskCell.textContent = time.task;
+                elapsedTimeCell.textContent = time.elapsed_time;
+
+                row.appendChild(taskCell);
+                row.appendChild(elapsedTimeCell);
+                tableBody.appendChild(row);
+              });
+
+              updatePreviousTasks();
+            })
+            .catch(error => {
+              console.error("Error updating times:", error);
+              alert(error.message || "An error occurred while updating times.");
+            });
         });
-    });
-      
-      </script>
+      });
+    </script>
   </body>
 </html>
