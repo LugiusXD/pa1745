@@ -5,6 +5,7 @@ import csv
 import pandas as pd
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+import json
 
 app = Flask(
     __name__,
@@ -30,6 +31,7 @@ task_colors = {
 }
 
 times_file = os.path.join(os.path.dirname(__file__), 'times.csv')
+assigned_tasks_file = os.path.join(os.path.dirname(__file__), 'assigned_tasks.csv')
 
 
 @app.route('/api/last-task')
@@ -115,6 +117,7 @@ def add_task():
         # Assign the new task
         tasks[task_slot] = {'name': task_name, 'start_time': None}
         task_aliases[task_slot] = task_name  # Save the alias
+        save_task_aliases()  # <-- Add this line
         print(f"New task {task_name} assigned to slot {task_slot}")
         return jsonify({'message': f'Task {task_name} assigned to {task_slot}.', 'tasks': tasks})
 
@@ -289,13 +292,14 @@ def graph_data():
 @app.route('/get_task_aliases', methods=['GET'])
 def get_task_aliases():
     # Return a mapping of task slots to their aliases, default names, and colors
+    all_slots = ["Task 1", "Task 2", "Task 3", "Task 4", "Task 5", "Task 6"]
     return jsonify({
         slot: {
-            "alias": alias,
+            "alias": task_aliases.get(slot, ""),
             "default": slot,
-            "color": task_colors[slot]  # Default color if not found
+            "color": task_colors[slot]
         }
-        for slot, alias in task_aliases.items()
+        for slot in all_slots
     })
 
 
@@ -412,6 +416,28 @@ def get_previous_tasks():
     return jsonify({'tasks': unique_tasks})
 
 
+def save_task_aliases():
+    with open(assigned_tasks_file, 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(['Task', 'Alias'])
+        for slot, alias in task_aliases.items():
+            writer.writerow([slot, alias])
+
+def load_task_aliases():
+    if os.path.exists(assigned_tasks_file):
+        with open(assigned_tasks_file, newline='') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                slot = row['Task']
+                alias = row['Alias']
+                task_aliases[slot] = alias
+                # Optionally, also restore to tasks dict:
+                if slot not in tasks:
+                    tasks[slot] = {'name': alias, 'start_time': None}
+
+
+# Load aliases from file at startup
+load_task_aliases()
 
 if __name__ == '__main__':
     app.run(debug=True)
