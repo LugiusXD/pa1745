@@ -9,7 +9,7 @@ import sys
 
 
 # Path to times.csv
-times_file = os.path.join('times.csv')
+times_file = os.path.join(os.path.dirname(__file__), 'times.csv')
 
 # Ensure the file exists
 if not os.path.exists(times_file):

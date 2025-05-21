@@ -1,5 +1,8 @@
 :: filepath: TimeTracker.bat
 @echo off
+echo Installing Python requirements...
+pip install -r website\requirements.txt
+
 echo Starting app.py...
 start cmd /k python "website\app.py"
 
